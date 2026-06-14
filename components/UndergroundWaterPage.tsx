@@ -7,6 +7,67 @@ import Map from './Map';
 import MapLegend from './MapLegend';
 import { SectionCard } from './AnalysisResults';
 
+const WaterAnalysisSkeleton: React.FC = () => {
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse text-slate-300">
+            {/* Target Depth */}
+            <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 bg-blue-500/30 rounded-full"></div>
+                    <div className="h-6 w-32 bg-slate-700/80 rounded"></div>
+                </div>
+                <div className="h-10 w-44 bg-blue-400/20 rounded"></div>
+                <div className="h-4 w-52 bg-slate-700/45 rounded"></div>
+            </div>
+
+            {/* Aquifer Type */}
+            <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 bg-blue-500/30 rounded-full"></div>
+                    <div className="h-6 w-36 bg-slate-700/80 rounded"></div>
+                </div>
+                <div className="h-7 w-52 bg-slate-700/60 rounded"></div>
+                <div className="space-y-1 pt-2">
+                    <div className="h-3 w-20 bg-slate-700/40 rounded"></div>
+                    <div className="h-5 w-28 bg-emerald-400/20 rounded"></div>
+                </div>
+            </div>
+
+            {/* Water Quality */}
+            <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 bg-blue-500/30 rounded-full"></div>
+                    <div className="h-6 w-32 bg-slate-700/80 rounded"></div>
+                </div>
+                <div className="h-6 w-4/5 bg-slate-700/50 rounded"></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1">
+                        <div className="h-3 w-16 bg-slate-700/40 rounded"></div>
+                        <div className="h-4 w-28 bg-slate-700/60 rounded"></div>
+                    </div>
+                    <div className="space-y-1">
+                        <div className="h-3 w-20 bg-slate-700/40 rounded"></div>
+                        <div className="h-4 w-28 bg-slate-700/60 rounded"></div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Academic Sources */}
+            <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-3">
+                <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 bg-blue-500/30 rounded-full"></div>
+                    <div className="h-6 w-36 bg-slate-700/80 rounded"></div>
+                </div>
+                <div className="space-y-2">
+                    <div className="h-4 w-11/12 bg-slate-700/40 rounded"></div>
+                    <div className="h-4 w-5/6 bg-slate-700/40 rounded"></div>
+                    <div className="h-4 w-4/5 bg-slate-700/40 rounded"></div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 const UndergroundWaterPage: React.FC = () => {
     const { t, language } = useLanguage();
     const { addToast } = useToast();
@@ -85,6 +146,8 @@ const UndergroundWaterPage: React.FC = () => {
                     {error}
                 </div>
             )}
+
+            {isLoading && <WaterAnalysisSkeleton />}
 
             {analysis && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">

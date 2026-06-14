@@ -36,6 +36,7 @@ export interface PlantingSuggestion {
     plantingDuration?: string;
     locationDetails?: string;
     areaPlanted?: string;
+    suitabilityScore?: number;
     sources?: Source[];
 }
 
@@ -142,6 +143,9 @@ const translations: Translations = {
         'home.tabs.grants': 'Grant Finder',
         'home.tabs.water': 'Underground Water',
         'home.tabs.smartFireSense': 'SmartFireSense Alerts',
+        'home.tabs.estimator': 'Budget Estimator',
+        'home.tabs.invest': 'Green Investments',
+        'home.tabs.newsletter': 'E-Publications Hub',
         'home.map.selected': 'Selected Location',
         'home.map.analyzed': 'Analyzed Area',
 
@@ -174,7 +178,7 @@ const translations: Translations = {
         'analysis.strategy.area': 'Planted Area',
         'analysis.strategy.moreDetails': 'Show More Details',
         'analysis.strategy.lessDetails': 'Show Less Details',
-        'analysis.downloadReport': 'Download HTML Report',
+        'analysis.downloadReport': 'Download PDF Report',
         
         'analysis.risk': 'Risk Assessment',
         'analysis.risk.natural': 'Natural Disaster Risks',
@@ -240,6 +244,9 @@ const translations: Translations = {
         'home.tabs.grants': 'یابنده بودجه',
         'home.tabs.water': 'منابع آب زیرزمینی',
         'home.tabs.smartFireSense': 'هشدار هوشمند آتش‌سوزی (SmartFireSense)',
+        'home.tabs.estimator': 'برآورد هزینه‌ها و پروژه',
+        'home.tabs.invest': 'سرمایه‌گذاری سبز',
+        'home.tabs.newsletter': 'انتشارات و خبرنامه',
         'home.map.selected': 'مکان انتخاب شده',
         'home.map.analyzed': 'منطقه تحلیل شده',
 
@@ -272,7 +279,7 @@ const translations: Translations = {
         'analysis.strategy.area': 'مساحت کاشته شده',
         'analysis.strategy.moreDetails': 'مشاهده جزئیات بیشتر',
         'analysis.strategy.lessDetails': 'مشاهده جزئیات کمتر',
-        'analysis.downloadReport': 'دانلود گزارش HTML',
+        'analysis.downloadReport': 'دانلود گزارش PDF',
         
         'analysis.risk': 'ارزیابی ریسک',
         'analysis.risk.natural': 'خطرات بلایای طبیعی',
@@ -338,6 +345,9 @@ const translations: Translations = {
         'home.tabs.grants': 'مكتشف المنح',
         'home.tabs.water': 'المياه الجوفية',
         'home.tabs.smartFireSense': 'إنذار الحريق الذكي (SmartFireSense)',
+        'home.tabs.estimator': 'تقدير ميزانية المشروع',
+        'home.tabs.invest': 'الاستثمار الأخضر',
+        'home.tabs.newsletter': 'النشرات والتقارير',
         'home.map.selected': 'الموقع المحدد',
         'home.map.analyzed': 'المنطقة المحللة',
 
@@ -370,7 +380,7 @@ const translations: Translations = {
         'analysis.strategy.area': 'المساحة المزروعة',
         'analysis.strategy.moreDetails': 'عرض المزيد من التفاصيل',
         'analysis.strategy.lessDetails': 'عرض تفاصيل أقل',
-        'analysis.downloadReport': 'تحميل تقرير HTML',
+        'analysis.downloadReport': 'تحميل تقرير PDF',
         
         'analysis.risk': 'تقييم المخاطر',
         'analysis.risk.natural': 'مخاطر الكوارث الطبيعية',

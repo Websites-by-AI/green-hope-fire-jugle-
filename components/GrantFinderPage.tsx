@@ -3,6 +3,35 @@ import { useLanguage, Grant, Source } from '../types';
 import { useToast } from './Toast';
 import { findGrants } from '../services/geminiService';
 
+const GrantFinderSkeleton: React.FC = () => {
+    return (
+        <div className="border-t border-slate-700 pt-8 mt-8 animate-pulse space-y-6">
+            <div className="h-8 w-64 bg-slate-700/50 rounded mx-auto mb-6"></div>
+            <div className="space-y-4">
+                {[1, 2].map((idx) => (
+                    <div key={idx} className="bg-slate-800/40 rounded-lg border border-white/5 p-5 space-y-3">
+                        <div className="h-6 w-1/2 bg-emerald-400/20 rounded"></div>
+                        <div className="space-y-2">
+                            <div className="h-4 bg-slate-700/40 rounded w-full"></div>
+                            <div className="h-4 bg-slate-700/40 rounded w-5/6"></div>
+                        </div>
+                        <div className="flex justify-between items-center pt-2">
+                            <div className="h-6 w-32 bg-amber-400/10 rounded-full"></div>
+                            <div className="h-4 w-24 bg-emerald-400/20 rounded"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            
+            <div className="pt-4 border-t border-slate-800 space-y-2">
+                <div className="h-4 w-16 bg-slate-700/55 rounded"></div>
+                <div className="h-3 bg-slate-700/35 rounded w-2/3"></div>
+                <div className="h-3 bg-slate-700/35 rounded w-1/2"></div>
+            </div>
+        </div>
+    );
+};
+
 const GrantFinderPage: React.FC = () => {
     const { t, language } = useLanguage();
     const { addToast } = useToast();
@@ -76,6 +105,8 @@ const GrantFinderPage: React.FC = () => {
 
             <div className="mt-8">
                 {error && <div className="text-red-400 p-4 bg-red-900/50 rounded-md text-center">{error}</div>}
+
+                {isLoading && <GrantFinderSkeleton />}
 
                 {grants.length > 0 && (
                      <div className="border-t border-slate-700 pt-8 mt-8">

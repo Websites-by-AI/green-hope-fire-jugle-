@@ -3,6 +3,31 @@ import { useLanguage, HomePlant } from '../types';
 import { useToast } from './Toast';
 import { getHomeGardeningSuggestions } from '../services/geminiService';
 
+const GardeningSkeleton: React.FC = () => {
+    return (
+        <div className="border-t border-slate-700 pt-8 mt-8 animate-pulse">
+            <div className="h-8 w-64 bg-slate-700/50 rounded mx-auto mb-6"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((idx) => (
+                    <div key={idx} className="bg-slate-800/40 rounded-lg border border-white/5 p-5 flex flex-col space-y-4">
+                        <div className="h-6 w-3/4 bg-emerald-400/20 rounded"></div>
+                        <div className="h-5 w-20 bg-amber-400/10 rounded-full"></div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-24 bg-slate-700/30 rounded"></div>
+                            <div className="h-4 bg-slate-700/40 rounded w-11/12"></div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-28 bg-slate-700/30 rounded"></div>
+                            <div className="h-4 bg-slate-700/40 rounded w-5/6"></div>
+                            <div className="h-4 bg-slate-700/40 rounded w-3/4"></div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 const HomeGardeningPage: React.FC = () => {
     const { t, language } = useLanguage();
     const { addToast } = useToast();
@@ -77,6 +102,8 @@ const HomeGardeningPage: React.FC = () => {
 
             <div className="mt-8">
                 {error && <div className="text-red-400 p-4 bg-red-900/50 rounded-md text-center">{error}</div>}
+
+                {isLoading && <GardeningSkeleton />}
 
                 {suggestions.length > 0 && (
                      <div className="border-t border-slate-700 pt-8 mt-8">

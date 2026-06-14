@@ -27,7 +27,8 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             },
             plantingDuration: "۴ ماه (پاییز تا اواخر زمستان)",
             locationDetails: "اراضی کوهپایه‌ای و دامنه‌های فرسایش‌یافته زاگرس مرکزی با خاک آهکی.",
-            areaPlanted: "۳.۵ هکتار"
+            areaPlanted: "۳.۵ هکتار",
+            suitabilityScore: 84
           },
           vegetationAnalysis: {
             currentVegetation: "مراتع خشک تنک شده با درختچه‌های خاردار کم‌تراکم.",
@@ -67,7 +68,8 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             },
             plantingDuration: "4 أشهر",
             locationDetails: "المنحدرات الجبلية المتدهورة.",
-            areaPlanted: "3 هكتارات"
+            areaPlanted: "3 هكتارات",
+            suitabilityScore: 78
           },
           vegetationAnalysis: {
             currentVegetation: "أراضي عشبية جافة مع شجيرات متفرقة.",
@@ -106,7 +108,8 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             },
             plantingDuration: "4 months (Late Autumn to early Spring)",
             locationDetails: "Degraded watershed slopes overlooking semi-arid highlands.",
-            areaPlanted: "3.5 Hectares"
+            areaPlanted: "3.5 Hectares",
+            suitabilityScore: 88
           },
           vegetationAnalysis: {
             currentVegetation: "Sparse, highly fragmented woody grasslands dominated by shrub communities.",
@@ -325,7 +328,8 @@ export const getFullAnalysis = async (
             },
             "plantingDuration": "string",
             "locationDetails": "string",
-            "areaPlanted": "string"
+            "areaPlanted": "string",
+            "suitabilityScore": number
           },
           "vegetationAnalysis": {
             "currentVegetation": "string",

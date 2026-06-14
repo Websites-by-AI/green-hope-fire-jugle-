@@ -4,9 +4,161 @@ import HomeGardeningPage from './HomeGardeningPage';
 import GrantFinderPage from './GrantFinderPage';
 import UndergroundWaterPage from './UndergroundWaterPage';
 import SmartFireSensePage from './SmartFireSensePage';
+import ProjectCostEstimator from './ProjectCostEstimator';
 import MapLegend from './MapLegend';
+import InvestmentPanel from './InvestmentPanel';
+import NewsletterHub from './NewsletterHub';
 import Map from './Map';
 import AnalysisResults from './AnalysisResults';
+
+const ReforestationSkeleton: React.FC = () => {
+    return (
+        <div className="space-y-8 animate-pulse text-slate-300">
+            {/* Header Skeleton */}
+            <div className="flex justify-between items-center">
+                <div className="h-8 w-48 bg-slate-700/80 rounded-lg"></div>
+                <div className="h-10 w-44 bg-slate-705/50 rounded-lg"></div>
+            </div>
+
+            {/* Grid of Weather & Vegetation */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Weather card skeleton */}
+                <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-6 w-6 bg-slate-700/50 rounded-full"></div>
+                        <div className="h-6 w-32 bg-slate-700/80 rounded"></div>
+                    </div>
+                    <div className="h-12 bg-slate-700/30 rounded w-full"></div>
+                    <div className="grid grid-cols-3 gap-4 pt-2">
+                        <div className="space-y-2">
+                            <div className="h-3 w-12 bg-slate-700/30 rounded"></div>
+                            <div className="h-5 w-16 bg-slate-700/55 rounded"></div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-12 bg-slate-700/30 rounded"></div>
+                            <div className="h-5 w-16 bg-slate-700/55 rounded"></div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-12 bg-slate-700/30 rounded"></div>
+                            <div className="h-5 w-16 bg-slate-700/55 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Vegetation card skeleton */}
+                <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-4">
+                    <div className="flex items-center gap-3">
+                        <div className="h-6 w-6 bg-slate-700/50 rounded-full"></div>
+                        <div className="h-6 w-40 bg-slate-700/80 rounded"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-3 w-28 bg-slate-700/30 rounded"></div>
+                        <div className="h-4 bg-slate-700/40 rounded w-5/6"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-3 w-24 bg-slate-700/30 rounded"></div>
+                        <div className="flex gap-2">
+                            <div className="h-6 w-20 bg-slate-700/50 rounded"></div>
+                            <div className="h-6 w-24 bg-slate-700/50 rounded"></div>
+                            <div className="h-6 w-16 bg-slate-700/50 rounded"></div>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <div className="h-3 w-16 bg-slate-700/30 rounded"></div>
+                            <div className="h-4 w-28 bg-slate-700/50 rounded"></div>
+                        </div>
+                        <div className="space-y-2">
+                            <div className="h-3 w-16 bg-slate-700/30 rounded"></div>
+                            <div className="h-4 w-28 bg-red-900/20 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Planting Suggestions Strategy Skeleton */}
+            <div className="bg-slate-800/40 rounded-xl border border-emerald-500/10 overflow-hidden p-6 space-y-6">
+                <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 bg-emerald-500/30 rounded-full"></div>
+                    <div className="h-6 w-56 bg-slate-700/80 rounded"></div>
+                </div>
+
+                <div className="space-y-3">
+                    <div className="h-4 w-32 bg-slate-700/50 rounded"></div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="bg-slate-900/30 p-4 rounded-lg border border-white/5 space-y-2">
+                            <div className="h-5 w-24 bg-emerald-500/20 rounded"></div>
+                            <div className="h-3 bg-slate-700/30 rounded w-full"></div>
+                            <div className="h-3 bg-slate-700/30 rounded w-4/5"></div>
+                        </div>
+                        <div className="bg-slate-900/30 p-4 rounded-lg border border-white/5 space-y-2">
+                            <div className="h-5 w-28 bg-emerald-500/20 rounded"></div>
+                            <div className="h-3 bg-slate-700/30 rounded w-full"></div>
+                            <div className="h-3 bg-slate-700/30 rounded w-2/3"></div>
+                        </div>
+                        <div className="bg-slate-900/30 p-4 rounded-lg border border-white/5 space-y-2">
+                            <div className="h-5 w-20 bg-emerald-500/20 rounded"></div>
+                            <div className="h-3 bg-slate-700/30 rounded w-full"></div>
+                            <div className="h-3 bg-slate-700/30 rounded w-5/6"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <div className="h-4 w-40 bg-slate-700/50 rounded"></div>
+                        <div className="h-16 bg-slate-700/30 rounded"></div>
+                    </div>
+                    <div className="space-y-2">
+                        <div className="h-4 w-40 bg-slate-700/50 rounded"></div>
+                        <div className="h-16 bg-slate-700/30 rounded"></div>
+                    </div>
+                </div>
+
+                {/* Cost estimate details skeleton */}
+                <div className="bg-slate-900/40 p-5 rounded-xl border border-emerald-500/10 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                        <div className="h-5 w-5 bg-amber-500/20 rounded-full"></div>
+                        <div className="h-5 w-32 bg-slate-700/50 rounded"></div>
+                    </div>
+                    <div className="h-7 w-24 bg-emerald-400/20 rounded"></div>
+                </div>
+            </div>
+
+            {/* Risk Card Skeleton */}
+            <div className="bg-slate-800/40 rounded-xl border border-white/5 overflow-hidden p-6 space-y-4">
+                <div className="flex items-center gap-3">
+                    <div className="h-6 w-6 bg-slate-700/50 rounded-full"></div>
+                    <div className="h-6 w-40 bg-slate-700/80 rounded"></div>
+                </div>
+                <div className="h-4 w-52 bg-slate-700/40 rounded"></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-slate-950/20 p-4 rounded border border-white/5 space-y-2">
+                        <div className="flex justify-between">
+                            <div className="h-5 w-32 bg-slate-700/50 rounded"></div>
+                            <div className="h-4 w-12 bg-red-900/20 rounded"></div>
+                        </div>
+                        <div className="h-3 bg-slate-700/30 rounded w-11/12"></div>
+                    </div>
+                    <div className="bg-slate-950/20 p-4 rounded border border-white/5 space-y-2">
+                        <div className="flex justify-between">
+                            <div className="h-5 w-24 bg-slate-700/50 rounded"></div>
+                            <div className="h-4 w-12 bg-yellow-904/20 rounded"></div>
+                        </div>
+                        <div className="h-3 bg-slate-700/30 rounded w-5/6"></div>
+                    </div>
+                </div>
+            </div>
+            
+            {/* Campaign skeleton */}
+            <div className="flex flex-col items-center justify-center py-6 border-t border-slate-700">
+                <div className="h-6 w-64 bg-slate-700/50 rounded mb-2"></div>
+                <div className="h-4 w-96 bg-slate-700/30 rounded mb-4"></div>
+                <div className="h-12 w-48 bg-emerald-500/10 rounded-full"></div>
+            </div>
+        </div>
+    );
+};
 
 interface GreenHopePageProps {
     onLocationSelect: (location: { lat: number; lng: number }, analyze: boolean) => void;
@@ -76,10 +228,14 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                     selectedLocation={props.selectedLocation}
                     onLocationSelect={(loc) => props.onLocationSelect(loc, false)}
                     areaRadius={areaRadius}
+                    suitabilityScore={props.plantingSuggestion?.suitabilityScore}
                 />
-                <MapLegend items={[
+                <MapLegend items={props.plantingSuggestion?.suitabilityScore !== undefined ? [
+                    { label: `${t('home.map.selected')} (${props.plantingSuggestion.suitabilityScore}%)`, color: props.plantingSuggestion.suitabilityScore >= 80 ? 'bg-emerald-500' : props.plantingSuggestion.suitabilityScore >= 50 ? 'bg-amber-500' : 'bg-rose-500' },
+                    { label: t('home.map.analyzed'), color: 'bg-emerald-500/20' }
+                ] : [
                     { label: t('home.map.selected'), color: 'bg-blue-500' },
-                    { label: t('home.map.analyzed'), color: 'bg-emerald-500' }
+                    { label: t('home.map.analyzed'), color: 'bg-emerald-500/20' }
                 ]} />
             </div>
 
@@ -144,16 +300,20 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
             )}
 
             {/* Analysis Results */}
-            {props.plantingSuggestion && props.vegetationAnalysis && props.riskAnalysis && (
-                <AnalysisResults 
-                    plantingSuggestion={props.plantingSuggestion}
-                    vegetationAnalysis={props.vegetationAnalysis}
-                    riskAnalysis={props.riskAnalysis}
-                    weatherData={props.weatherData}
-                    crowdfundingCampaign={props.crowdfundingCampaign}
-                    onGenerateCampaign={props.onGenerateCampaign}
-                    isGeneratingCampaign={props.isLoading === 'campaign'}
-                />
+            {props.isLoading === 'full-analysis' ? (
+                <ReforestationSkeleton />
+            ) : (
+                props.plantingSuggestion && props.vegetationAnalysis && props.riskAnalysis && (
+                    <AnalysisResults 
+                        plantingSuggestion={props.plantingSuggestion}
+                        vegetationAnalysis={props.vegetationAnalysis}
+                        riskAnalysis={props.riskAnalysis}
+                        weatherData={props.weatherData}
+                        crowdfundingCampaign={props.crowdfundingCampaign}
+                        onGenerateCampaign={props.onGenerateCampaign}
+                        isGeneratingCampaign={props.isLoading === 'campaign'}
+                    />
+                )
             )}
         </div>
     );
@@ -197,6 +357,27 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                         <i className="fas fa-hand-holding-dollar mr-2 rtl:ml-2"></i>
                         {t('home.tabs.grants')}
                     </button>
+                    <button
+                        onClick={() => setActiveTab('estimator')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === 'estimator' ? 'border-emerald-500 text-emerald-400 scale-105' : 'border-transparent text-slate-400 hover:text-white hover:border-slate-500'}`}
+                    >
+                        <i className="fas fa-calculator mr-2 rtl:ml-2 text-emerald-400 animate-pulse"></i>
+                        {t('home.tabs.estimator')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('invest')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === 'invest' ? 'border-emerald-500 text-emerald-400 scale-105' : 'border-transparent text-slate-400 hover:text-white hover:border-slate-500'}`}
+                    >
+                        <i className="fas fa-chart-line mr-2 rtl:ml-2 text-emerald-400"></i>
+                        {t('home.tabs.invest')}
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('newsletter')}
+                        className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-all duration-200 ${activeTab === 'newsletter' ? 'border-teal-500 text-teal-400 scale-105' : 'border-transparent text-slate-400 hover:text-white hover:border-slate-500'}`}
+                    >
+                        <i className="fas fa-envelopes-bulk mr-2 rtl:ml-2 text-teal-400"></i>
+                        {t('home.tabs.newsletter')}
+                    </button>
                 </nav>
             </div>
             
@@ -206,6 +387,9 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                 {activeTab === 'water' && <UndergroundWaterPage />}
                 {activeTab === 'gardening' && <HomeGardeningPage />}
                 {activeTab === 'grants' && <GrantFinderPage />}
+                {activeTab === 'estimator' && <ProjectCostEstimator />}
+                {activeTab === 'invest' && <InvestmentPanel />}
+                {activeTab === 'newsletter' && <NewsletterHub />}
             </div>
         </div>
     );
