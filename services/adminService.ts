@@ -99,14 +99,40 @@ const DEFAULT_LOGS: SystemLog[] = [
   { id: 'log-4', timestamp: new Date(Date.now() - 5000).toISOString(), level: 'success', message: 'Rate limiter initialized. Limits: 5 requests/min.' }
 ];
 
+// Helper for safe localStorage access in sandbox/iframe environments
+const safeGetItem = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch (e) {
+    console.warn("Storage access denied:", e);
+    return null;
+  }
+};
+
+const safeSetItem = (key: string, value: string) => {
+  try {
+    localStorage.setItem(key, value);
+  } catch (e) {
+    console.warn("Storage write denied:", e);
+  }
+};
+
+const safeRemoveItem = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (e) {
+    console.warn("Storage removal denied:", e);
+  }
+};
+
 // Helper to load/save Submissions
 export const getSubmissions = (): AdminSubmission[] => {
-  const data = localStorage.getItem('greenhope_submissions');
-  if (!data) {
-    localStorage.setItem('greenhope_submissions', JSON.stringify(DEFAULT_SUBMISSIONS));
-    return DEFAULT_SUBMISSIONS;
-  }
   try {
+    const data = safeGetItem('greenhope_submissions');
+    if (!data) {
+      safeSetItem('greenhope_submissions', JSON.stringify(DEFAULT_SUBMISSIONS));
+      return DEFAULT_SUBMISSIONS;
+    }
     return JSON.parse(data);
   } catch (e) {
     return DEFAULT_SUBMISSIONS;
@@ -114,7 +140,7 @@ export const getSubmissions = (): AdminSubmission[] => {
 };
 
 export const saveSubmissions = (subs: AdminSubmission[]) => {
-  localStorage.setItem('greenhope_submissions', JSON.stringify(subs));
+  safeSetItem('greenhope_submissions', JSON.stringify(subs));
 };
 
 export const addSubmission = (type: 'reforestation' | 'water', location: { lat: number; lng: number }, details: any, coordinator: string = 'Public User') => {
@@ -159,12 +185,12 @@ export const updateSubmissionStatus = (id: string, status: 'pending' | 'approved
 
 // Helper to load/save Logs
 export const getSystemLogs = (): SystemLog[] => {
-  const data = localStorage.getItem('greenhope_logs');
-  if (!data) {
-    localStorage.setItem('greenhope_logs', JSON.stringify(DEFAULT_LOGS));
-    return DEFAULT_LOGS;
-  }
   try {
+    const data = safeGetItem('greenhope_logs');
+    if (!data) {
+      safeSetItem('greenhope_logs', JSON.stringify(DEFAULT_LOGS));
+      return DEFAULT_LOGS;
+    }
     return JSON.parse(data);
   } catch (e) {
     return DEFAULT_LOGS;
@@ -182,9 +208,9 @@ export const addSystemLog = (level: 'info' | 'warning' | 'success' | 'error', me
   logs.unshift(newLog);
   // Keep last 50 logs
   if (logs.length > 50) logs.pop();
-  localStorage.setItem('greenhope_logs', JSON.stringify(logs));
+  safeSetItem('greenhope_logs', JSON.stringify(logs));
 };
 
 export const clearSystemLogs = () => {
-  localStorage.setItem('greenhope_logs', JSON.stringify([]));
+  safeSetItem('greenhope_logs', JSON.stringify([]));
 };

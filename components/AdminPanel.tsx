@@ -21,7 +21,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToApp }) => {
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('greenhope_admin_authenticated') === 'true';
+    try {
+      return localStorage.getItem('greenhope_admin_authenticated') === 'true';
+    } catch (e) {
+      console.warn("Storage access denied:", e);
+      return false;
+    }
   });
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -56,7 +61,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToApp }) => {
     const trimmedPass = password.trim();
 
     if (trimmedUser === 'alan' && trimmedPass === 'admin') {
-      localStorage.setItem('greenhope_admin_authenticated', 'true');
+      try {
+        localStorage.setItem('greenhope_admin_authenticated', 'true');
+      } catch (e) {
+        console.warn("Storage write denied:", e);
+      }
       setIsAuthenticated(true);
       addToast('Welcome back, Admin Alan!', 'success');
       addSystemLog('success', 'Admin Alan logged in successfully from secure portal.');
@@ -68,7 +77,11 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToApp }) => {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('greenhope_admin_authenticated');
+    try {
+      localStorage.removeItem('greenhope_admin_authenticated');
+    } catch (e) {
+      console.warn("Storage removal denied:", e);
+    }
     setIsAuthenticated(false);
     setUsername('');
     setPassword('');
