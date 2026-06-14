@@ -32,7 +32,7 @@ interface GreenHopePageProps {
 
 const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
     const { t } = useLanguage();
-    const [activeTab, setActiveTab] = useState('reforestation');
+    const [activeTab, setActiveTab] = useState('smartfiresense');
 
     const getEstimatedRadius = (areaStr: string | undefined): number | undefined => {
         if (!areaStr) return undefined;
