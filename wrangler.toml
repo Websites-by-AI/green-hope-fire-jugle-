@@ -1,0 +1,6 @@
+name = "green-hope-fire-juglle"
+compatibility_date = "2024-04-03"
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
