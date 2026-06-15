@@ -14,21 +14,25 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <!-- Leaflet Draw CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-    <!-- Leaflet Draw JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
     <style>
       body {
         font-family: 'Vazirmatn', 'Inter', sans-serif;
         scroll-behavior: smooth;
-        background-color: #0f172a; /* slate-900 for main app */
+        background-color: #020617; /* even darker bg */
+        color: #f8fafc;
       }
       .font-inter {
          font-family: 'Inter', sans-serif;
       }
       .animate-fade-in {
-        animation: fadeIn 0.5s ease-in-out;
+        animation: fadeIn 0.5s ease-out;
+      }
+      .animate-float {
+        animation: float 6s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
       }
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
@@ -39,15 +43,41 @@
       }
       @keyframes pulse-glow {
         0%, 100% {
-          box-shadow: 0 0 0.5rem rgba(52, 211, 153, 0.4);
+          box-shadow: 0 0 0.5rem rgba(16, 185, 129, 0.3);
         }
         50% {
-          box-shadow: 0 0 1.5rem rgba(52, 211, 153, 0.7);
+          box-shadow: 0 0 2rem rgba(16, 185, 129, 0.5);
         }
       }
+      .glass-card {
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .glass-card:hover {
+        border-color: rgba(16, 185, 129, 0.4);
+        background: rgba(15, 23, 42, 0.8);
+        transform: translateY(-4px);
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #10b981;
+      }
+
       /* Leaflet custom styles */
       .leaflet-container {
-          background: #334155; /* slate-700 */
+          background: #0f172a;
       }
       .leaflet-popup-content-wrapper, .leaflet-popup-tip {
         background: #1e293b; /* slate-800 */

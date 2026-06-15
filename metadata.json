@@ -1,6 +1,6 @@
 {
-  "name": "Remix: Jungle fire :   پروژه امید سبز | کاشت درخت با هوش مصنوعی good 2",
-  "description": "با استفاده از هوش مصنوعی، بهترین مکان‌ها را برای کاشت درخت شناسایی کنید، تحلیل‌های زیست‌محیطی دریافت کنید و برای پروژه‌های خود سرمایه جمع‌آوری کنید.",
+  "name": "Green Hope: Wildfire Prevention & Forest Protection",
+  "description": "An advanced expert dashboard for ecological monitoring, wildfire risk prediction, satellite remote sensing, and grant-matching for forest protection and reforestation.",
   "requestFramePermissions": [
     "geolocation"
   ],

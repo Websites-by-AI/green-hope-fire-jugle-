@@ -598,6 +598,9 @@ export default function InvestmentPanel() {
         </div>
 
       </div>
+
+      {/* The Official Audit has been moved to its own separate tab */}
+
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { FullAnalysis, CrowdfundingCampaign, WeatherData, PlantingSuggestion, HomePlant, Grant, Source, UndergroundWaterAnalysis } from '../types';
+import { FullAnalysis, CrowdfundingCampaign, WeatherData, PlantingSuggestion, HomePlant, Grant, Source, UndergroundWaterAnalysis, EnvironmentalAudit } from '../types';
 import { canMakeApiCall, recordApiCall } from './rateLimiter';
 
 // Use secure local proxy rather than direct external API calls
@@ -27,8 +27,7 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             },
             plantingDuration: "۴ ماه (پاییز تا اواخر زمستان)",
             locationDetails: "اراضی کوهپایه‌ای و دامنه‌های فرسایش‌یافته زاگرس مرکزی با خاک آهکی.",
-            areaPlanted: "۳.۵ هکتار",
-            suitabilityScore: 84
+            areaPlanted: "۳.۵ هکتار"
           },
           vegetationAnalysis: {
             currentVegetation: "مراتع خشک تنک شده با درختچه‌های خاردار کم‌تراکم.",
@@ -68,8 +67,7 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             },
             plantingDuration: "4 أشهر",
             locationDetails: "المنحدرات الجبلية المتدهورة.",
-            areaPlanted: "3 هكتارات",
-            suitabilityScore: 78
+            areaPlanted: "3 هكتارات"
           },
           vegetationAnalysis: {
             currentVegetation: "أراضي عشبية جافة مع شجيرات متفرقة.",
@@ -108,8 +106,7 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             },
             plantingDuration: "4 months (Late Autumn to early Spring)",
             locationDetails: "Degraded watershed slopes overlooking semi-arid highlands.",
-            areaPlanted: "3.5 Hectares",
-            suitabilityScore: 88
+            areaPlanted: "3.5 Hectares"
           },
           vegetationAnalysis: {
             currentVegetation: "Sparse, highly fragmented woody grasslands dominated by shrub communities.",
@@ -207,27 +204,77 @@ const generateLocalMockDataClient = (promptStr: string): any => {
       if (isPersian) {
         return {
           grants: [
-            { name: "بودجه مشارکتی صندوق محیط‌زیست ایران (IEFs)", description: "مشارکت نقدی غیرقرضی در احیای جنگل‌های تخریب‌شده بومی با استفاده از تشکل‌های زراعی محلی.", deadline: "۳۰ مهرماه ۱۴۰۵", link: "https://www.ief.ir/grants" },
-            { name: "بنیاد جهانی تسهیلات محیط زیست (GEF) - برنامه کمک‌های کوچک", description: "اعطای ظرفیت تا سقف ۵۰ هزار دلار برای پروژه‌های بومی جامعه‌محور با تمرکز بر تنوع زیستی زاگرس.", deadline: "۱۵ دی‌ماه ۱۴۰۵", link: "https://sgp.undp.org" },
-            { name: "صندوق سبز توسعه اراضی کشاورزی پایدار تفتان", description: "اعطای منابع مالی خرد جهت آبیاری تحت‌فشار و بازچرخانی سامانه‌های زهکشی باغی.", deadline: "مداوم - فاقد ضرب‌الاجل", link: "https://www.taftanfund.ir" }
+            { name: "برنامه کمک‌های خرد تسهیلات محیط زیست جهانی (GEF SGP)", description: "حمایت مالی از پروژه‌های جامعه‌محور برای مبارزه با بیابان‌زایی و احیای تنوع زیستی در منطقه زاگرس.", deadline: "۱۵ دسامبر ۲۰۲۵", link: "https://sgp.undp.org" },
+            { name: "صندوق سازگاری با تغییرات اقلیمی (Adaptation Fund)", description: "تأمین بودجه برای زیرساخت‌های مقاوم در برابر خشکسالی و سیستم‌های هشدار زودهنگام حریق.", deadline: "۳۰ مارس ۲۰۲۶", link: "https://www.adaptation-fund.org" },
+            { name: "گرنت‌های بنیاد میراث زاگرس", description: "تمرکز بر پایش پهپادی و ایجاد نهالستان‌های بومی برای بلوط و بنه.", deadline: "۳۰ مهر ۱۴۰۴", link: "https://zagros.ir/grants" }
           ],
           sources: [
-            { uri: "https://sgp.undp.org", title: "صندوق برنامه عمران ملل متحد (UNDP SGP)" }
+            { uri: "https://sgp.undp.org", title: "صندوق برنامه عمران ملل متحد (UNDP SGP)" },
+            { uri: "https://www.adaptation-fund.org", title: "صندوق سازگاری رسمی ملل متحد" }
           ]
         };
       } else {
         return {
           grants: [
-            { name: "Global Environment Facility (GEF) Small Grants Programme", description: "Provides financial grants up to USD 50,000 to local NGOs implementing community restoration programs to fight land degradation.", deadline: "December 15, 2026", link: "https://sgp.undp.org" },
-            { name: "Aridlands Restoration Fund by IUCN", description: "Focuses on supporting local native seed banks and high-survival sapling plantation strategies in dry ecosystems.", deadline: "October 30, 2026", link: "https://www.iucn.org/grants" },
-            { name: "UNEP Regional Combating Desertification Support", description: "Targeted funding initiatives for establishing real-time telemetry sensor stations for forest fire early observation networks.", deadline: "Rolling deadline yearly", link: "https://www.unep.org" }
+            { name: "GEF Small Grants Programme (SGP) - Reforestation Track", description: "Direct funding for community-led biodiversity restoration and sustainable land management in arid ecosystems.", deadline: "December 15, 2025", link: "https://sgp.undp.org" },
+            { name: "IUCN Arid Lands Restoration Fund", description: "Specifically targets projects building native seed banks and high-survival sapling nurseries in the Middle East.", deadline: "October 30, 2026", link: "https://www.iucn.org/grants" },
+            { name: "Green Climate Fund (GCF) Community Readiness Window", description: "Grants for implementing local early-warning systems for forest fires and extreme drought responses.", deadline: "Rolling deadline 2025", link: "https://www.greenclimate.fund" }
           ],
           sources: [
-            { uri: "https://sgp.undp.org", title: "UNDP SGP Global Portal" }
+            { uri: "https://sgp.undp.org", title: "UNDP SGP Global Portal" },
+            { uri: "https://www.greenclimate.fund", title: "Green Climate Fund Official" }
           ]
         };
       }
     } 
+    else if (promptStr.includes("environmental and grant-eligibility audit") || promptStr.includes("audit")) {
+      // Environmental Audit
+      if (isPersian) {
+        return {
+          fireRiskStatus: "بسیار بالا - هشدار سطح قرمز در دامنه‌های غربی",
+          undergroundWaterStatus: "کاهش ۱۵ درصدی تراز ایستمابی در سال جاری",
+          basinAnalysis: "حوضه آبریز فلات مرکزی (Basin No. 4) - وضعیت تنش آبی شدید",
+          localWatershedStatus: "تخریب مسیل‌های فصلی و فرسایش کناری در بالادست",
+          ecosystemHealthScore: 42,
+          shakespeareanSummary: "ای زاگرس کهن! آتش بر دامان تو چنگ زده و تشنگی در اعماق ریشه‌هایت بیداد می‌کند. گویی تقدیر چنین رقم خورده که بلوط‌هایت در سوگ آب، نوای وداع سر دهند.",
+          criticalObservations: [
+            "فرسایش شدید خاک در یال‌های شمالی ناشی از تخریب پوشش گیاهی",
+            "خشکیدگی سرشاخه بلوط‌های کهنسال (Oak dieback)",
+            "برداشت غیرمجاز از چاه‌های عمیق در شعاع ۵ کیلومتری منطقه",
+            "کاهش شدید تراکم نهال‌های سنواتی به دلیل چرای دام"
+          ],
+          recommendedGrantCategories: ["احیای فوری جنگل (Restoration)", "تحقیقات آبخیزداری (Research)", "تکنولوژی پایش حریق (Green Tech)"],
+          operationalEstimation: {
+            personnelCount: 25,
+            trainingHours: 120,
+            estimatedOperationalCost: "۴۵۰,۰۰۰,۰۰۰ تومان",
+            infrastructureNeeds: ["دکل‌های دیده‌بانی هوشمند SmartFireSense", "مخازن آب استراتژیک در ارتفاعات", "نهالستان بومی پرتابل"]
+          }
+        };
+      } else {
+        return {
+          fireRiskStatus: "Extreme - Critical drought stress detected",
+          undergroundWaterStatus: "Severe depletion of the fractured karstic aquifer",
+          basinAnalysis: "Central Plateau Drainage Basin - Severe aridification trend",
+          localWatershedStatus: "Seasonal gully erosion in secondary recharge zones",
+          ecosystemHealthScore: 38,
+          shakespeareanSummary: "O ancient peaks of the Zagros! Thy verdant skin is scorched by the breath of fire, and thy silver veins of silver water run dry. The heavens have turned to brass, and the earth to iron.",
+          criticalObservations: [
+            "Severe topsoil loss on north-facing slopes due to canopy loss",
+            "Widespread presence of oak borer beetles in heat-stressed clusters",
+            "Illegal deep-well pumping within 5km radius exceeding recharge rate",
+            "Zero natural regeneration detected in open grazing corridors"
+          ],
+          recommendedGrantCategories: ["Emergency Reforestation", "Hydro-Research Grants", "IoT Early-Warning Support"],
+          operationalEstimation: {
+            personnelCount: 30,
+            trainingHours: 150,
+            estimatedOperationalCost: "$12,000 USD",
+            infrastructureNeeds: ["Satellite-linked sensor arrays", "Tactical water retention basins", "Rapid response UAV fleet"]
+          }
+        };
+      }
+    }
     else if (promptStr.includes("weather") || promptStr.includes("typical current weather")) {
       if (isPersian) {
         return {
@@ -254,7 +301,7 @@ const generateLocalMockDataClient = (promptStr: string): any => {
     }
 };
 
-async function performApiCall<T>(prompt: string, schema?: any, useGrounding: boolean = false, systemInstruction?: string): Promise<T> {
+async function performApiCall<T>(prompt: string, schema?: any, useSearch: boolean = false, systemInstruction?: string): Promise<T> {
     const rateLimitCheck = canMakeApiCall();
     if (!rateLimitCheck.allowed) {
         throw new Error(`RATE_LIMIT_EXCEEDED:${rateLimitCheck.retryAfter}`);
@@ -269,7 +316,8 @@ async function performApiCall<T>(prompt: string, schema?: any, useGrounding: boo
             },
             body: JSON.stringify({
                 prompt,
-                systemInstruction
+                systemInstruction,
+                useSearch
             })
         });
 
@@ -328,8 +376,7 @@ export const getFullAnalysis = async (
             },
             "plantingDuration": "string",
             "locationDetails": "string",
-            "areaPlanted": "string",
-            "suitabilityScore": number
+            "areaPlanted": "string"
           },
           "vegetationAnalysis": {
             "currentVegetation": "string",
@@ -412,14 +459,64 @@ export const findGrants = async (
     language: string,
 ): Promise<{grants: Grant[], sources?: Source[]}> => {
      const prompt = `
-        Find 3-5 suitable real-world funding grants for this reforestation project: "${projectDescription}" in ${language}.
+        Find 3-5 suitable real-world funding grants, international climate funds, or local Iranian environmental grants for this project: "${projectDescription}".
+        
+        CRITICAL: Use your Google Search tool to find CURRENTly active or recurring grants for 2024, 2025, and 2026. 
+        Focus on:
+        - GEF Small Grants Program
+        - UNDP Climate Adaptation Funds
+        - Green Climate Fund (GCF) project pipelines
+        - Regional environmental initiatives in the Middle East / Zagros region
+        
+        Provide accurate names, specific purposes, actual deadlines (or recurring windows), and official source URLs.
+        Respond in ${language}.
+        
         Return a JSON object with this structure:
         {
           "grants": [{"name": "string", "description": "string", "deadline": "string", "link": "string"}],
           "sources": [{"uri": "string", "title": "string"}]
         }
     `;
-    return performApiCall<{grants: Grant[], sources?: Source[]}>(prompt);
+    return performApiCall<{grants: Grant[], sources?: Source[]}>(prompt, undefined, true);
+};
+
+export const getEnvironmentalAudit = async (
+    location: { lat: number, lng: number },
+    language: string,
+): Promise<EnvironmentalAudit> => {
+    const prompt = `
+        Perform a comprehensive, professional environmental and grant-eligibility audit for a proposed reforestation project at: latitude ${location.lat}, longitude ${location.lng}.
+        
+        The audit MUST be detailed and data-driven:
+        1. Current Fire Risk Status: Analyze vegetation density, recent heatwaves, and local history.
+        2. Underground Water: Analyze the Karstic aquifer depth and recent depletion trends.
+        3. Basin/Watershed Analysis: Identify the specific Drainage Basin (e.g., Lake Urmia basin, Persian Gulf basin) and its current water stress.
+        4. Local Watershed Status: Describe the health of the specific surface water collectors in that immediate coordinate.
+        5. Ecosystem Health Score: A quantitative metric (0-100).
+        6. Shakespearean Summary: A dramatic, high-prestige opening in the style of a grand tragedy or survival epic (in ${language}). Ensure it utilizes rich nature metaphors.
+        7. Critical Observations: Minimum 4 specific environmental red-flags or opportunities.
+        8. Recommended Grant Categories: Specific tracks and why they fit.
+        9. Operational Estimation: Realistic numbers for personnel, training, cost, and infrastructure.
+        
+        Return a JSON object with this exact structure:
+        {
+          "fireRiskStatus": "string",
+          "undergroundWaterStatus": "string",
+          "basinAnalysis": "string",
+          "localWatershedStatus": "string",
+          "ecosystemHealthScore": number,
+          "shakespeareanSummary": "string",
+          "criticalObservations": ["string"],
+          "recommendedGrantCategories": ["string"],
+          "operationalEstimation": {
+            "personnelCount": number,
+            "trainingHours": number,
+            "estimatedOperationalCost": "string",
+            "infrastructureNeeds": ["string"]
+          }
+        }
+    `;
+    return performApiCall<EnvironmentalAudit>(prompt);
 };
 
 export const getUndergroundWaterAnalysis = async (
