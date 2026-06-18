@@ -1,15 +1,40 @@
-import React, { useState } from 'react';
-import { PlantingSuggestion, VegetationAnalysis, RiskAnalysis, CrowdfundingCampaign, WeatherData, useLanguage } from '../types';
-import HomeGardeningPage from './HomeGardeningPage';
-import GrantFinderPage from './GrantFinderPage';
-import UndergroundWaterPage from './UndergroundWaterPage';
-import SmartFireSensePage from './SmartFireSensePage';
-import ProjectCostEstimator from './ProjectCostEstimator';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+import { PlantingSuggestion, VegetationAnalysis, RiskAnalysis, CrowdfundingCampaign, WeatherData, useLanguage, localizeNumber } from '../types';
+import { motion, AnimatePresence } from 'motion/react';
+import { auth, googleProvider } from '../src/firebase';
+import { signInWithPopup, signOut, onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+const HomeGardeningPage = React.lazy(() => import('./HomeGardeningPage'));
+const GrantFinderPage = React.lazy(() => import('./GrantFinderPage'));
+const PatentDraftingPage = React.lazy(() => import('./PatentDraftingPage'));
+const UndergroundWaterPage = React.lazy(() => import('./UndergroundWaterPage'));
+const SmartFireSensePage = React.lazy(() => import('./SmartFireSensePage'));
+const ProjectCostEstimator = React.lazy(() => import('./ProjectCostEstimator'));
+const Timeline = React.lazy(() => import('./Timeline'));
 import MapLegend from './MapLegend';
-import InvestmentPanel from './InvestmentPanel';
-import NewsletterHub from './NewsletterHub';
-import Map from './Map';
-import AnalysisResults from './AnalysisResults';
+const InvestmentPanel = React.lazy(() => import('./InvestmentPanel'));
+const NewsletterHub = React.lazy(() => import('./NewsletterHub'));
+const Map = React.lazy(() => import('./Map'));
+const AnalysisResults = React.lazy(() => import('./AnalysisResults'));
+const AIModuleOptimizer = React.lazy(() => import('./AIModuleOptimizer'));
+import { ModuleOptimizer } from './ModuleOptimizer';
+const BacklogView = React.lazy(() => import('./BacklogView'));
+const ProductsView = React.lazy(() => import('./ProductsView'));
+const ContactView = React.lazy(() => import('./ContactView'));
+const CooperationRoadmap = React.lazy(() => import('./CooperationRoadmap').then(m => ({ default: m.CooperationRoadmap })));
+import { 
+    LayoutGrid, 
+    History as HistoryIcon, 
+    ShoppingBag as ShoppingBagIcon, 
+    Contact as ContactIcon,
+    Home as HomeIcon,
+    ChevronLeft,
+    ChevronRight,
+    Search,
+    User,
+    Tag,
+    ArrowRight
+} from 'lucide-react';
 
 interface GreenHopePageProps {
     onLocationSelect: (location: { lat: number; lng: number }, analyze: boolean) => void;
@@ -35,18 +60,48 @@ interface GreenHopePageProps {
 
 const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
     const { t, language } = useLanguage();
+    const isRTL = language === 'fa' || language === 'ar';
     const [activeTab, setActiveTab] = useState('dashboard');
+    const [user, setUser] = useState<FirebaseUser | null>(null);
+    const location = useLocation();
 
-    const dashboardItems = [
-        { id: 'reforestation', title: t('home.tabs.reforestation'), icon: 'fa-shield-halved', color: 'text-emerald-400', bg: 'from-emerald-900/40 to-emerald-950/60', desc: language === 'fa' ? 'سنجش سلامت جنگل، پایش خطرات زیستی، و تدارک فاز دوم احیاء' : 'Forest health diagnostics, biological threat assessment, and recovery planning', stats: '3.5 Ha' },
-        { id: 'smartfiresense', title: t('home.tabs.smartFireSense'), icon: 'fa-fire', color: 'text-rose-400', bg: 'from-rose-900/40 to-rose-950/60', desc: language === 'fa' ? 'پایش لحظه‌ای حریق و پیش‌بینی مناطق بحرانی' : 'Real-time fire monitoring and risk prediction', stats: '72% Risk' },
-        { id: 'water', title: t('home.tabs.water'), icon: 'fa-water', color: 'text-blue-400', bg: 'from-blue-900/40 to-blue-950/60', desc: language === 'fa' ? 'تحلیل سفره‌های زیرزمینی و تراز آبخوان‌های کارستی' : 'Karstic aquifer and groundwater level analysis', stats: '95m Depth' },
-        { id: 'grants', title: t('home.tabs.grants'), icon: 'fa-hand-holding-dollar', color: 'text-amber-400', bg: 'from-amber-900/40 to-amber-950/60', desc: language === 'fa' ? 'یافتن منابع مالی و گرنت‌های بین‌المللی فعال' : 'Find active international grants and funding', stats: '4 Active' },
-        { id: 'estimator', title: t('home.tabs.estimator'), icon: 'fa-calculator', color: 'text-indigo-400', bg: 'from-indigo-900/40 to-indigo-950/60', desc: language === 'fa' ? 'برآورد دقیق هزینه‌های پروژه‌های حفاظتی' : 'Precision costing for conservation projects', stats: '$28K Est.' },
-        { id: 'invest', title: t('home.tabs.invest'), icon: 'fa-chart-line', color: 'text-teal-400', bg: 'from-teal-900/40 to-teal-950/60', desc: language === 'fa' ? 'فرصت‌های سرمایه‌گذاری سبز و بورس کربن' : 'Green investment opportunities and carbon credit', stats: 'B+ Class' },
-        { id: 'gardening', title: t('home.tabs.gardening'), icon: 'fa-seedling', color: 'text-lime-400', bg: 'from-lime-900/40 to-lime-950/60', desc: language === 'fa' ? 'پیشنهادات اختصاصی برای فضای سبز شهری و خانگی' : 'Custom suggestions for urban and home gardens', stats: 'High Care' },
-        { id: 'newsletter', title: t('home.tabs.newsletter'), icon: 'fa-envelopes-bulk', color: 'text-cyan-400', bg: 'from-cyan-900/40 to-cyan-950/60', desc: language === 'fa' ? 'دریافت آخرین اخبار و گزارش‌های بحران زمین' : 'Latest earth crisis news and periodic reports', stats: 'Weekly' },
-    ];
+    useEffect(() => {
+        const unsubscribe = onAuthStateChanged(auth, setUser);
+        return () => unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(location.search);
+        const tab = queryParams.get('tab');
+        const validTabs = ['dashboard', 'reforestation', 'smartfiresense', 'water', 'grants', 'patent', 'backlog', 'products', 'invest', 'contact', 'cooperation'];
+        if (tab && validTabs.includes(tab)) {
+            setActiveTab(tab);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }, [location.search]);
+
+    const handleSignIn = () => signInWithPopup(auth, googleProvider);
+    const handleSignOut = () => signOut(auth);
+
+    const appleDockItems = React.useMemo(() => [
+        { id: 'dashboard', icon: <HomeIcon className="w-5 h-5" />, label: language === 'fa' ? 'پیشخوان' : 'Home' },
+        { id: 'backlog', icon: <HistoryIcon className="w-5 h-5" />, label: language === 'fa' ? 'بک‌لاگ' : 'Backlog' },
+        { id: 'products', icon: <ShoppingBagIcon className="w-5 h-5" />, label: language === 'fa' ? 'محصولات' : 'Products' },
+        { id: 'contact', icon: <ContactIcon className="w-5 h-5" />, label: language === 'fa' ? 'تماس با ما' : 'Contact' },
+    ], [language]);
+
+    const dashboardItems = React.useMemo(() => [
+        { id: 'reforestation', title: t('home.tabs.reforestation'), icon: 'fa-shield-halved', color: 'text-emerald-400', bg: 'from-emerald-900/40 to-emerald-950/60', desc: language === 'fa' ? 'سنجش سلامت جنگل، پایش خطرات زیستی، و تدارک فاز دوم احیاء' : 'Forest health diagnostics, biological threat assessment, and recovery planning', stats: localizeNumber(3.5, language) + (language === 'fa' ? ' هکتار' : ' Ha') },
+        { id: 'cooperation', title: language === 'fa' ? 'نقشه راه ائتلاف ۴ نفره' : '4-Member Cooperation Roadmap', icon: 'fa-users', color: 'text-emerald-400', bg: 'from-emerald-950/40 to-emerald-900/60', desc: language === 'fa' ? 'نقشه راه ۲۸ روزه پایش هوشمند، نوتبوک‌های کولب و سناریوی تولید محتوا' : 'Comprehensive 28-day roadmap fusing system APIs, Google Colab and social content schedules', stats: language === 'fa' ? '۴ هفته' : '4 Weeks' },
+        { id: 'smartfiresense', title: t('home.tabs.smartFireSense'), icon: 'fa-fire', color: 'text-rose-400', bg: 'from-rose-900/40 to-rose-950/60', desc: language === 'fa' ? 'پایش لحظه‌ای حریق و پیش‌بینی مناطق بحرانی' : 'Real-time fire monitoring and risk prediction', stats: localizeNumber(72, language) + (language === 'fa' ? '٪ ریسک' : '% Risk') },
+        { id: 'water', title: t('home.tabs.water'), icon: 'fa-water', color: 'text-blue-400', bg: 'from-blue-900/40 to-blue-950/60', desc: language === 'fa' ? 'تحلیل سفره‌های زیرزمینی و تراز آبخوان‌های کارستی' : 'Karstic aquifer and groundwater level analysis', stats: localizeNumber(95, language) + (language === 'fa' ? ' متر عمق' : 'm Depth') },
+        { id: 'grants', title: t('home.tabs.grants'), icon: 'fa-hand-holding-dollar', color: 'text-amber-400', bg: 'from-amber-900/40 to-amber-950/60', desc: language === 'fa' ? 'یافتن منابع مالی و گرنت‌های بین‌المللی فعال' : 'Find active international grants and funding', stats: localizeNumber(4, language) + (language === 'fa' ? ' فعال' : ' Active') },
+        { id: 'patent', title: language === 'fa' ? 'سامانه پتنت و ایده' : 'Patent & Idea Shield', icon: 'fa-shield', color: 'text-emerald-300', bg: 'from-emerald-800/40 to-emerald-900/60', desc: language === 'fa' ? 'ثبت و بررسی ایده‌های محیط‌زیستی' : 'Patent and Idea Shield', stats: 'New' },
+        { id: 'backlog', title: language === 'fa' ? 'بک‌لاگ عملیاتی' : 'Project Backlog', icon: 'fa-history', color: 'text-slate-400', bg: 'from-slate-800/40 to-slate-900/60', desc: language === 'fa' ? 'رهگیری آخرین اقدامات و تسک‌های حفاظتی' : 'Tracking latest conservation actions and tasks', stats: localizeNumber(12, language) + (language === 'fa' ? ' مورد' : ' Items') },
+        { id: 'products', title: language === 'fa' ? 'تدارکات و محصولات' : 'Products & Logistics', icon: 'fa-shopping-bag', color: 'text-emerald-300', bg: 'from-emerald-800/40 to-emerald-900/60', desc: language === 'fa' ? 'سفارش تجهیزات پایش و نهال‌های بومی' : 'Order monitoring equipment and native seedlings', stats: 'Deymeh V2' },
+        { id: 'invest', title: t('home.tabs.invest'), icon: 'fa-chart-line', color: 'text-teal-400', bg: 'from-teal-900/40 to-teal-950/60', desc: language === 'fa' ? 'فرظت‌های سرمایه‌گذاری سبز و بورس کربن' : 'Green investment opportunities and carbon credit', stats: 'B+ Class' },
+        { id: 'contact', title: language === 'fa' ? 'تماس و همکاری' : 'Contact & Partners', icon: 'fa-address-book', color: 'text-blue-400', bg: 'from-blue-900/40 to-blue-950/60', desc: language === 'fa' ? 'درگاه ارتباطی شبکه بین‌المللی امید سبز' : 'Communication portal for international partners', stats: localizeNumber(24, language) + (language === 'fa' ? ' گره' : ' Nodes') },
+    ], [t, language]);
 
     const getEstimatedRadius = (areaStr: string | undefined): number | undefined => {
         if (!areaStr) return undefined;
@@ -73,6 +128,7 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
     const areaRadius = props.plantingSuggestion ? getEstimatedRadius(props.plantingSuggestion.areaPlanted) : undefined;
 
     const [climateScenario, setClimateScenario] = useState<'normal' | 'drought' | 'boost'>('normal');
+    const [modulesLayout, setModulesLayout] = useState<'compact' | 'list'>('compact');
 
     const getClimateRisk = () => {
         if (climateScenario === 'drought') return '89% Critical';
@@ -135,368 +191,290 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
     ];
 
     const renderDashboard = () => (
-        <div id="dashboard" className="animate-fade-in py-6">
-            
+        <div id="dashboard" className={`animate-fade-in py-6 flex flex-col gap-8`}>
             {/* Header Title Hero Section */}
-            <div className="text-center mb-16 relative">
+            <div className="absolute top-4 right-4 z-50">
+                {user ? (
+                    <div className="flex items-center gap-3 bg-slate-900/50 p-2 rounded-full border border-white/10">
+                        <img src={user.photoURL || ''} className="w-8 h-8 rounded-full" alt="User" />
+                        <button onClick={handleSignOut} className="text-xs font-bold text-slate-300 hover:text-white px-2">
+                            {language === 'fa' ? 'خروج' : 'Sign Out'}
+                        </button>
+                    </div>
+                ) : (
+                    <button onClick={handleSignIn} className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white p-2 px-4 rounded-full text-xs font-bold transition">
+                        <User className="w-4 h-4" />
+                        {language === 'fa' ? 'ورود با گوگل' : 'Sign In'}
+                    </button>
+                )}
+            </div>
+
+            <div className="text-center mb-4 relative">
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none"></div>
                 
                 <div className="inline-block px-4 py-1.5 mb-6 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-[0.2em] animate-pulse">
-                    {language === 'fa' ? 'پیشخوان ارشد پایش هوشمند و ضدحریق اراضی v3.2' : 'Enterprise Forest Sentinel & Fire Safeguard Dashboard v3.2'}
+                    {language === 'fa' ? 'سامانه یکپارچه مقتدر گارد امید سبز' : 'GreenHope Autonomous Guard Unified Platform'}
                 </div>
                 
-                <h1 className="text-4xl md:text-7xl font-black text-white tracking-tighter mb-6 leading-[1.0] max-w-4xl mx-auto">
+                <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 leading-[1.1] max-w-4xl mx-auto">
                     <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 via-teal-300 to-rose-400">
                         {t('home.title')}
                     </span>
                 </h1>
                 
-                <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-300 font-semibold leading-relaxed px-4">
-                    {t('home.subtitle')}
+                <p className="text-sm md:text-base text-slate-300 max-w-3xl mx-auto leading-relaxed mb-6">
+                    {language === 'fa' 
+                      ? 'پلتفرم پیشرفته دانش‌بنیان امید سبز با تکیه بر تحلیل‌های چندطیفی ماهواره‌ای Sentinel-2، پایش حرارتی مادون قرمز حریق، اسکن آبخوان‌های کارستی زاگرس و ثبت بین‌المللی ایده‌های زیست‌محیطی شما، امنیت پایدار منابع طبیعی را تضمین می‌کند.'
+                      : 'GreenHope platform delivers cutting-edge satellite surveillance using Sentinel-2 spectra, real-time thermal anomaly fire monitoring, subterranean karstic hydrology management, and automated global green patent protection.'}
                 </p>
-
-                {/* Dashboard Core Telemetry Metrics Bar */}
-                <div className="mt-12 max-w-5xl mx-auto grid grid-cols-2 lg:grid-cols-4 gap-4 px-2">
-                    {[
-                        { 
-                            label: language === 'fa' ? 'مساحت کل اراضی تحت پایش' : 'Total Surveyed Woodlands', 
-                            val: ((props.reforestationGoal || 5) * 15).toLocaleString(), 
-                            unit: language === 'fa' ? 'هکتار زنده' : 'Hectares', 
-                            color: 'text-teal-400',
-                            icon: 'fa-earth-asia'
-                        },
-                        { 
-                            label: language === 'fa' ? 'میانگین ریسک تنش خشکی' : 'Mean Moisture Stress Index', 
-                            val: climateScenario === 'drought' ? '89% Critical' : climateScenario === 'boost' ? '15% Safe' : '52% Moderate', 
-                            unit: '', 
-                            color: climateScenario === 'drought' ? 'text-rose-500 animate-pulse' : 'text-amber-400',
-                            icon: 'fa-temperature-sun'
-                        },
-                        { 
-                            label: language === 'fa' ? 'ذخیره رواناب سفره کارستی' : 'Estimated Aquifer Index', 
-                            val: getWaterReserve(), 
-                            unit: 'Million Tons', 
-                            color: 'text-blue-400',
-                            icon: 'fa-water'
-                        },
-                        { 
-                            label: language === 'fa' ? 'سنسورهای صوتی و ماهواره‌ای' : 'IoT Nodes & Satellites', 
-                            val: '2,480 Active', 
-                            unit: 'Live Gates', 
-                            color: 'text-emerald-400',
-                            icon: 'fa-satellite-dish'
-                        },
-                    ].map((s, i) => (
-                        <div key={i} className="bg-slate-900/60 backdrop-blur-md rounded-3xl p-5 border border-white/5 shadow-xl hover:border-white/10 transition-all text-center relative group">
-                            <div className="absolute top-4 right-4 text-slate-600/50 group-hover:text-emerald-500/30 transition-colors">
-                                <i className={`fa-solid ${s.icon} text-lg`}></i>
-                            </div>
-                            <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">{s.label}</div>
-                            <div className="flex items-baseline justify-center gap-1">
-                                <span className={`text-2xl font-black ${s.color}`}>{s.val}</span>
-                                {s.unit && <span className="text-[9px] font-bold text-slate-500">{s.unit}</span>}
-                            </div>
-                        </div>
-                    ))}
-                </div>
             </div>
 
-            {/* LIVE SENTINEL SECTORS REAL-TIME MONITOR (ZAAGROS & ALBORZ FEED) */}
-            <div id="satellite-stream" className="mb-12 max-w-5xl mx-auto bg-slate-950/80 border border-white/5 rounded-[2.5rem] p-8 shadow-3xl relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 via-rose-500 to-emerald-500 animate-pulse"></div>
-                
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 text-right rtl:text-right">
+            {/* THREE HIGH-QUALITY INTERACTIVE TELEMETRY & STRATEGY BLOCKS */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {/* Block 1: Real-time Sentinel Fire Code Alert */}
+                <div className="bg-slate-900/40 p-5 rounded-3xl border border-white/5 shadow-xl shadow-black/30 flex flex-col justify-between text-right rtl:text-right ltr:text-left hover:border-emerald-500/20 transition-all">
                     <div>
-                        <div className="flex items-center gap-2 justify-end">
-                            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping"></span>
-                            <span className="text-[10px] font-black text-rose-400 uppercase tracking-widest">{language === 'fa' ? 'فید زنده ماهواره‌ای و پایش سنسورهای محلی' : 'Copernicus Sentinels & Ground IoT Feed'}</span>
-                        </div>
-                        <h3 className="text-2xl font-black text-white mt-1">
-                            {language === 'fa' ? 'پایش سنجش از دور و تهدید حرارتی کانون‌های جنگلی' : 'Dynamic Remote Sensing and Thermal Threat Logs'}
-                        </h3>
-                    </div>
-                    <div className="px-4 py-2 rounded-2xl bg-white/5 border border-white/5 text-xs text-slate-400 inline-flex items-center justify-center gap-2 font-mono">
-                        <i className="fa-solid fa-clock text-emerald-400 animate-spin" style={{ animationDuration: '6s' }}></i>
-                        <span>{language === 'fa' ? 'پایگاه داده زاگرس: برخط' : 'Telemetry Link: ESTABLISHED'}</span>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {sentinelSectors.map((sec, idx) => (
-                        <div key={idx} className="bg-slate-900/50 rounded-2xl p-5 border border-white/5 hover:border-slate-800 transition-all flex flex-col justify-between text-right rtl:text-right">
-                            <div className="flex justify-between items-start flex-row-reverse mb-4">
-                                <div>
-                                    <h4 className="font-extrabold text-sm text-white">
-                                        {language === 'fa' ? sec.nameFa : sec.nameEn}
-                                    </h4>
-                                    <div className="flex items-center gap-1.5 justify-end mt-1 text-[10px] text-slate-400">
-                                        {sec.uavActive && (
-                                            <span className="bg-teal-500/20 text-teal-300 px-1.5 py-0.2 rounded text-[8px] font-black uppercase">
-                                                🚁 {language === 'fa' ? 'گشت پهپادی فعال' : 'UAV Patrol Active'}
-                                            </span>
-                                        )}
-                                        <span>Sentinel-2 Orthophoto • 10m Pixels</span>
-                                    </div>
-                                </div>
-                                <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
-                                    sec.level === 'red' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 
-                                    sec.level === 'orange' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 
-                                    sec.level === 'blue' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 
-                                    'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                }`}>
-                                    {language === 'fa' ? sec.statusFa : sec.statusEn}
-                                </span>
+                        <div className="flex items-center justify-between mb-4 flex-row-reverse">
+                            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-400 animate-pulse">
+                                <i className="fa-solid fa-fire text-lg"></i>
                             </div>
-
-                            <div className="grid grid-cols-3 gap-3 border-t border-white/5 pt-4">
-                                <div className="text-center">
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">{language === 'fa' ? 'درجه حرارت' : 'Temp'}</div>
-                                    <div className="text-sm font-extrabold text-slate-300 font-mono">{sec.temp}°C</div>
-                                </div>
-                                <div className="text-center border-x border-white/5">
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">{language === 'fa' ? 'رطوبت خاک' : 'Moisture'}</div>
-                                    <div className="text-sm font-extrabold text-slate-300 font-mono">{sec.moisture}%</div>
-                                </div>
-                                <div className="text-center">
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-0.5">{language === 'fa' ? 'سرعت باد' : 'Wind'}</div>
-                                    <div className="text-sm font-extrabold text-slate-300 font-mono">{sec.wind} km/h</div>
-                                </div>
-                            </div>
+                            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-rose-950/40 border border-rose-500/20 text-rose-400">
+                                {language === 'fa' ? 'پایش مداوم حریق' : 'Live Thermal Guard'}
+                            </span>
                         </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* LIVE INTERACTIVE SIMULATOR & PLANNER PANEL */}
-            <div id="simulator-controller" className="mb-12 max-w-5xl mx-auto glass-card bg-slate-900/40 p-8 rounded-[2.5rem] border border-white/5 relative overflow-hidden shadow-3xl">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none"></div>
-                <div className="absolute bottom-0 left-0 w-80 h-80 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center relative z-10">
-                    
-                    {/* Simulator Controls */}
-                    <div className="lg:col-span-5 text-right rtl:text-right ltr:text-left">
-                        <h4 className="text-xl font-black text-white mb-2 tracking-tight flex items-center justify-end gap-2">
-                            <span>{language === 'fa' ? 'سامانه شبیه‌سازی و سناریوسازی اقلیمی' : 'Ecology Scenario Simulator'}</span>
-                            <i className="fas fa-microchip text-emerald-400"></i>
+                        <h4 className="text-base font-extrabold text-white mb-2 leading-tight">
+                            {language === 'fa' ? 'سنجش و آنومالی دمایی حومه' : 'Active Ecological Zones Alert'}
                         </h4>
-                        <p className="text-slate-300 text-xs font-semibold mb-6 leading-relaxed">
-                            {language === 'fa' 
-                              ? 'تاثیر تصمیمات حفاظتی، حجم اراضی و خشکسالی‌های موسمی را بر پارامترهای جنگل زنده بررسی کنید.' 
-                              : 'Simulate the impact of climate anomalies on soil dry wood moisture and fire hazard ratings.'}
-                        </p>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-2 flex justify-between">
-                                    <span className="text-emerald-400">{(props.numberOfTrees || 1000).toLocaleString()} {language === 'fa' ? 'نهال آماده' : 'Saplings'}</span>
-                                    <span>{language === 'fa' ? 'نهال‌های بازیابی فاز ۲ (کمک به حریق)' : 'Target Post-Fire Saplings'}</span>
-                                </label>
-                                <input 
-                                    type="range" 
-                                    min="100" 
-                                    max="50000" 
-                                    step="100"
-                                    value={props.numberOfTrees || 1000} 
-                                    onChange={(e) => props.onNumberOfTreesChange(parseInt(e.target.value))}
-                                    className="w-full accent-emerald-500 bg-slate-850 rounded-lg appearance-none h-1.5 cursor-pointer focus:outline-none"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-bold text-slate-400 mb-2 flex justify-between">
-                                    <span className="text-emerald-400">{(props.reforestationGoal || 5).toLocaleString()} {language === 'fa' ? 'هکتار حفاظتی' : 'Protection Hectares'}</span>
-                                    <span>{language === 'fa' ? 'مساحت کل پهنه حفاظت‌شونده' : 'Woodland Protected Buffer Scale'}</span>
-                                </label>
-                                <input 
-                                    type="range" 
-                                    min="1" 
-                                    max="200" 
-                                    step="1"
-                                    value={props.reforestationGoal || 5} 
-                                    onChange={(e) => props.onReforestationGoalChange(parseInt(e.target.value))}
-                                    className="w-full accent-teal-500 bg-slate-850 rounded-lg appearance-none h-1.5 cursor-pointer focus:outline-none"
-                                />
-                            </div>
-
-                            <div className="pt-2">
-                                <label className="block text-[9px] font-black uppercase text-slate-400 mb-2.5">{language === 'fa' ? 'سناریوی جوی فعال در شبیه‌ساز' : 'Active Atmospheric Simulator Scenario'}</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {[
-                                        { id: 'normal', icon: 'fa-cloud-sun', label: language === 'fa' ? 'نرمال' : 'Normal', color: 'hover:text-emerald-400' },
-                                        { id: 'drought', icon: 'fa-sun', label: language === 'fa' ? 'خشکسالی' : 'Drought', color: 'hover:text-rose-500' },
-                                        { id: 'boost', icon: 'fa-droplet', label: language === 'fa' ? 'بارش شدید' : 'Rainy Boost', color: 'hover:text-blue-500' },
-                                    ].map((sc) => (
-                                        <button
-                                            key={sc.id}
-                                            onClick={() => setClimateScenario(sc.id as any)}
-                                            className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 border transition-all ${climateScenario === sc.id ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-400 shadow-md shadow-emerald-500/20 scale-102' : 'bg-slate-900/60 text-slate-400 border-white/5 ' + sc.color}`}
-                                        >
-                                            <i className={`fas ${sc.icon} text-[10px]`}></i>
-                                            <span>{sc.label}</span>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Output indicators calculated in real-time */}
-                    <div className="lg:col-span-7 bg-slate-950/70 border border-white/5 rounded-3xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6 relative">
-                        <div className="flex flex-col justify-between text-right rtl:text-right ltr:text-left">
-                            <div className="w-10 h-10 rounded-xl bg-teal-500/10 flex items-center justify-center text-teal-400 mb-4 border border-teal-500/20 shadow-inner">
-                                <i className="fas fa-satellite"></i>
-                            </div>
-                            <div>
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">{language === 'fa' ? 'مساحت تحت پایش حرارتی' : 'Area Under Thermal Watch'}</div>
-                                <div className="text-2xl font-black text-white tracking-tight leading-none">
-                                    {((props.reforestationGoal || 5) * 15).toLocaleString()} <span className="text-xs text-slate-500 font-bold">Ha</span>
-                                </div>
-                                <div className="text-[9px] text-teal-400 font-bold mt-1.5 flex items-center gap-1 justify-end">
-                                    <i className="fas fa-check-circle"></i>
-                                    {language === 'fa' ? 'پایش مادون قرمز فعال' : 'Active sat sweeps'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col justify-between text-right rtl:text-right ltr:text-left border-t md:border-t-0 md:border-r border-white/5 pt-6 md:pt-0 md:pr-6">
-                            <div className="w-10 h-10 rounded-xl bg-orange-500/10 flex items-center justify-center text-orange-400 mb-4 border border-orange-500/20 shadow-inner">
-                                <i className="fas fa-shield-halved"></i>
-                            </div>
-                            <div>
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">{language === 'fa' ? 'ریسک رطوبتی پیشگیری حریق' : 'Moisture Spark Risk'}</div>
-                                <div className="text-2xl font-black text-white tracking-tight leading-none">
-                                    {climateScenario === 'drought' ? (language === 'fa' ? 'حیاتی / بسیار خشک' : 'Critical / Flammable') : (language === 'fa' ? 'پایدار / نرمال' : 'Stable / Normal')}
-                                </div>
-                                <div className="text-[9px] text-orange-400 font-bold mt-1.5 flex items-center gap-1 justify-end">
-                                    <i className="fas fa-microchip"></i>
-                                    {language === 'fa' ? 'سنسورهای رطوبت چوب فعال' : 'Moisture sensor link live'}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col justify-between text-right rtl:text-right ltr:text-left border-t md:border-t-0 md:border-r border-white/5 pt-6 md:pt-0 md:pr-6">
-                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4 border border-blue-500/20 shadow-inner">
-                                <i className="fas fa-seedling"></i>
-                            </div>
-                            <div>
-                                <div className="text-[10px] font-black text-slate-500 uppercase tracking-wider mb-1">{language === 'fa' ? 'نهال‌های آماده بهزراعی' : 'Endemic Species Reserve'}</div>
-                                <div className="text-2xl font-black text-white tracking-tight leading-none">
-                                    {(props.numberOfTrees || 1000).toLocaleString()} <span className="text-xs text-slate-500 font-bold">{language === 'fa' ? 'اصله' : 'Saplings'}</span>
-                                </div>
-                                <div className="text-[9px] text-blue-400 font-bold mt-1.5 flex items-center gap-1 justify-end">
-                                    <i className="fas fa-dharmachakra"></i>
-                                    {language === 'fa' ? 'کاشت تکمیلی پس از مهار ریسک' : 'Phase 2 reforestation ready'}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* INTERACTIVE FOREST GUARD CONSERVATION CHAIN WORKFLOW */}
-            <div id="about-mission" className="mb-16 max-w-5xl mx-auto text-right rtl:text-right">
-                <h3 className="text-2xl font-black text-white mb-6 text-center">
-                    {language === 'fa' ? '🔒 حلقه حفاظتی پلتفرم امید سبز: مهار آتش‌سوزی تا کاشت جبرانی' : '🔒 GreenHope Protection Chain: From Spreading Spark Control to Forest Growth'}
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    {[
-                        { step: '01', icon: 'fa-satellite', labelFa: 'سنجش مادون قرمز', labelEn: 'Satellite Thermal Scan', descFa: 'رهگیری روزانه نقاط حرارتی بحرانی زاگرس', descEn: 'Daily Sentinel infra thermal alert logs' },
-                        { step: '02', icon: 'fa-ear-listen', labelFa: 'شنود حفاظتی (صوت)', labelEn: 'Acoustic Ears on Canopy', descFa: 'تشخیص فوری صدای اره برقی، شلیک و باروت', descEn: 'Real-time solar microphone acoustic logs' },
-                        { step: '03', icon: 'fa-droplet', labelFa: 'پایش آبخوان کارستی', labelEn: 'Karstic Hydrology', descFa: 'سنجش و تراز آبخوان زیرزمینی صخره‌ها', descEn: 'Underground karstic water flow tracking' },
-                        { step: '04', icon: 'fa-plane-slash', labelFa: 'مهار ترابری ضدحریق', labelEn: 'Tactical Aviation Containment', descFa: 'اعزام جهت خفه‌سازی حریق با بستر دفاعی', descEn: 'Swarms deploying tactical retardant vessels' },
-                        { step: '05', icon: 'fa-leaf', labelFa: 'بازسازی و جنگل‌کاری', labelEn: 'Endemic Reforestation', descFa: 'کاشت علمی گونه‌های مقاوم وحشی پسته و بلوط', descEn: 'Drone biodiversity seeding & community nursery' }
-                    ].map((step, idx) => (
-                        <div key={idx} className="bg-slate-900/40 p-5 rounded-2xl border border-white/5 flex flex-col justify-between relative group hover:border-emerald-500/20 transition-all">
-                            <span className="text-[10px] font-mono font-black text-emerald-500/40 block mb-2">{step.step}</span>
-                            <div>
-                                <div className="text-emerald-400 mb-3 text-lg">
-                                    <i className={`fa-solid ${step.icon}`}></i>
-                                </div>
-                                <h5 className="font-extrabold text-white text-xs mb-1.5">
-                                    {language === 'fa' ? step.labelFa : step.labelEn}
-                                </h5>
-                                <p className="text-[10px] text-slate-400 leading-normal">
-                                    {language === 'fa' ? step.step === '05' ? 'فاز نهایی بازسازی جنگل با کاشت علمی درختان بومی مقاوم.' : step.descFa : step.descEn}
-                                </p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-
-            {/* INTEGRATED FUNCTIONAL WORKFLOW GRID MODULES */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-2">
-                {dashboardItems.map((item) => (
-                    <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => setActiveTab(item.id)}
-                        className={`group relative overflow-hidden rounded-[2.5rem] p-8 glass-card bg-gradient-to-br ${item.bg} text-right rtl:text-right ltr:text-left h-full flex flex-col justify-between border border-white/5 active:scale-95 transition-all duration-300 shadow-2xl shadow-black/40`}
-                    >
-                        <div className="relative z-10 w-full">
-                            <div className="flex justify-between items-start mb-6">
-                                <div className={`w-14 h-14 rounded-2xl bg-slate-900/50 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500 shadow-lg`}>
-                                    <i className={`fas ${item.icon} text-2xl ${item.color}`}></i>
-                                </div>
-                                <div className={`text-[10px] font-black px-3 py-1 rounded-full bg-black/40 border border-white/10 ${item.color} uppercase tracking-tighter`}>
-                                    {item.stats}
-                                </div>
-                            </div>
-                            <h3 className="text-2xl font-black text-white mb-3 group-hover:text-emerald-400 tracking-tighter transition-colors">
-                                {item.title}
-                            </h3>
-                            <p className="text-slate-300 text-xs leading-relaxed font-semibold opacity-85 group-hover:opacity-100 transition-opacity">
-                                {item.desc}
-                            </p>
-                        </div>
-                        <div className="mt-8 flex justify-between items-center relative z-10 w-full">
-                            <div className="flex -space-x-2 rtl:space-x-reverse opacity-40 group-hover:opacity-100 transition-opacity">
-                                {[1,2,3].map(i => (
-                                    <div key={i} className="w-6 h-6 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center">
-                                       <div className={`w-1.5 h-1.5 rounded-full bg-emerald-500`}></div>
+                        <div className="space-y-2 mt-4 text-[11px] text-slate-300">
+                            {sentinelSectors.slice(0, 2).map((sec, idx) => (
+                                <div key={idx} className="p-2 rounded-lg bg-black/40 border border-white/5 flex justify-between items-center flex-row-reverse">
+                                    <div className="flex items-center gap-1.5 flex-row-reverse">
+                                        <span className={`w-2 h-2 rounded-full ${sec.level === 'red' ? 'bg-rose-500 animate-ping' : 'bg-amber-500'}`}></span>
+                                        <span className="font-bold">{language === 'fa' ? sec.nameFa : sec.nameEn}</span>
                                     </div>
-                                ))}
+                                    <span className="font-mono text-slate-400">{sec.temp}°C | Hum: {sec.moisture}%</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setActiveTab('smartfiresense')}
+                        className="mt-4 w-full py-2 bg-rose-950/20 hover:bg-rose-900/30 border border-rose-500/20 text-rose-300 font-bold rounded-xl text-xs transition duration-200"
+                    >
+                        {language === 'fa' ? 'ورود به پایش راداری حریق ←' : 'Open Fire Sensors Monitor →'}
+                    </button>
+                </div>
+
+                {/* Block 2: Green Patent System Shield */}
+                <div className="bg-slate-900/40 p-5 rounded-3xl border border-white/5 shadow-xl shadow-black/30 flex flex-col justify-between text-right rtl:text-right ltr:text-left hover:border-emerald-500/20 transition-all">
+                    <div>
+                        <div className="flex items-center justify-between mb-4 flex-row-reverse">
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-400">
+                                <i className="fa-solid fa-gavel text-lg"></i>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-emerald-500 group-hover:text-white group-hover:shadow-[0_0_15px_rgba(16,185,129,0.5)] transition-all duration-500">
-                                <i className={`fas ${language === 'fa' ? 'fa-arrow-left' : 'fa-arrow-right'} text-xs`}></i>
+                            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-950/40 border border-emerald-500/20 text-emerald-400">
+                                {language === 'fa' ? 'اسناد و ایده‌های سبز' : 'Patent Shield'}
+                            </span>
+                        </div>
+                        <h4 className="text-base font-extrabold text-white mb-2 leading-tight">
+                            {language === 'fa' ? 'طرح معاهده ثبت و کپی‌رایت ایده' : 'Environmental Intellectual Rights'}
+                        </h4>
+                        <p className="text-[11px] text-slate-300 leading-relaxed mt-2">
+                            {language === 'fa'
+                              ? 'صاحبان ایده و جنگل‌داران می‌توانند با استفاده از ماژول ارشد پتنت، اسناد مالکیت فکری اراضی را برای معاهدات بریتانیا و اروپا هماهنگ کنند.'
+                              : 'Protect your green initiatives through our streamlined fast-track patent drafting tool with active UK and US Climate program compliance.'}
+                        </p>
+                        <div className="mt-4 p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/10 text-[10px] text-emerald-400 font-bold leading-tight">
+                            {language === 'fa' ? '⚡ ۳۵ درصد تخفیف خودکار عوارض دولتی معاهده ثبت' : '⚡ 35% Automatic Fee Exemption Active'}
+                        </div>
+                    </div>
+                    <button 
+                        onClick={() => setActiveTab('patent')}
+                        className="mt-4 w-full py-2 bg-emerald-950/20 hover:bg-emerald-900/30 border border-emerald-500/20 text-emerald-305 font-bold rounded-xl text-xs transition duration-200"
+                    >
+                        {language === 'fa' ? 'ورود به سامانه پتنت و ایده •' : 'Launch Patent Shield •'}
+                    </button>
+                </div>
+
+                {/* Block 3: Ground Water Reservoir & Planting Goal */}
+                <div className="bg-slate-900/40 p-5 rounded-3xl border border-white/5 shadow-xl shadow-black/30 flex flex-col justify-between text-right rtl:text-right ltr:text-left hover:border-emerald-500/20 transition-all">
+                    <div>
+                        <div className="flex items-center justify-between mb-4 flex-row-reverse">
+                            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center border border-blue-500/20 text-blue-400">
+                                <i className="fa-solid fa-water text-lg"></i>
+                            </div>
+                            <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-blue-950/40 border border-blue-500/20 text-blue-400">
+                                {language === 'fa' ? 'آبخوان کارستی' : 'Groundwater Reserves'}
+                            </span>
+                        </div>
+                        <h4 className="text-base font-extrabold text-white mb-2 leading-tight">
+                            {language === 'fa' ? 'تراز منابع آبی زاگرس و کاشت' : 'Subterranean Hydrology Reserve'}
+                        </h4>
+                        
+                        {/* Climate Toggle Selector */}
+                        <div className="flex bg-black/40 p-1 rounded-lg border border-white/5 gap-1 my-3 justify-center">
+                            {['normal', 'drought', 'boost'].map((scen) => (
+                                <button
+                                    key={scen}
+                                    type="button"
+                                    onClick={() => setClimateScenario(scen as any)}
+                                    className={`flex-1 text-[9px] font-bold py-1 px-1.5 rounded-md transition-all ${
+                                        climateScenario === scen
+                                            ? 'bg-blue-500 text-white shadow-md'
+                                            : 'text-slate-400 hover:text-white'
+                                    }`}
+                                >
+                                    {scen === 'normal' ? (language === 'fa' ? 'نرمال' : 'Normal') :
+                                     scen === 'drought' ? (language === 'fa' ? 'خشکسالی' : 'Drought') :
+                                     (language === 'fa' ? 'ترسالی' : 'Boost')}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="space-y-1.5 text-[11px] text-slate-300">
+                            <div className="flex justify-between flex-row-reverse">
+                                <span>{language === 'fa' ? 'آبخوان کارستی زاگرس:' : 'Karstic active reserve:'}</span>
+                                <span className="font-mono font-bold text-blue-400">{getWaterReserve()}</span>
+                            </div>
+                            <div className="flex justify-between flex-row-reverse">
+                                <span>{language === 'fa' ? 'ریسک تبخیر لایه سطحی:' : 'Evapotranspiration risk:'}</span>
+                                <span className="font-mono font-bold text-amber-400">{getClimateRisk()}</span>
                             </div>
                         </div>
-                        {/* Decorative background shape */}
-                        <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full blur-3xl group-hover:bg-emerald-400/20 transition-all duration-700"></div>
+                    </div>
+                    <button 
+                        onClick={() => setActiveTab('water')}
+                        className="mt-4 w-full py-2 bg-blue-950/20 hover:bg-blue-900/30 border border-blue-500/20 text-blue-300 font-bold rounded-xl text-xs transition duration-200"
+                    >
+                        {language === 'fa' ? 'پایش منابع آب زیرزمینی ←' : 'Scan Underground Aquifers →'}
                     </button>
-                ))}
+                </div>
             </div>
 
-            {/* Quick Status / Footer of Dashboard */}
-            <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-white/5 pt-12">
-                 <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-900/30">
-                    <div className="w-12 h-12 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500">
-                        <i className="fas fa-fire-flame-curved text-lg"></i>
+            {/* SEPARATOR AND COMPACT MODULES GRID CONTROLLER */}
+            <div className="mt-4 mb-2 flex items-center justify-between border-b border-white/5 pb-4 flex-row-reverse">
+                <div className="text-right rtl:text-right">
+                    <h3 className="text-lg font-black text-white">
+                        {language === 'fa' ? 'دسترسی سریع به سامانه‌ها و ماژول‌ها' : 'Systems & Core Modules Navigation'}
+                    </h3>
+                    <p className="text-[11px] text-slate-400">
+                        {language === 'fa' ? 'ماژول پایش انتخابی خود را جهت پایش عمیق‌تر اراضی بالا بیاورید.' : 'Configure or check the details of specialized GreenHope widgets.'}
+                    </p>
+                </div>
+
+                {/* Compact Layout Switch Mode */}
+                <div className="flex bg-slate-900/60 p-1 rounded-xl border border-white/5 gap-2 shadow-inner">
+                    <button
+                        type="button"
+                        onClick={() => setModulesLayout('compact')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            modulesLayout === 'compact'
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md font-black'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <i className="fa-solid fa-shapes text-[10px]"></i>
+                        <span>{language === 'fa' ? 'شبکه فشرده دکمه‌ها' : 'Compact Grid'}</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setModulesLayout('list')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                            modulesLayout === 'list'
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md font-black'
+                                : 'text-slate-400 hover:text-white hover:bg-white/5'
+                        }`}
+                    >
+                        <i className="fa-solid fa-list-ul text-[10px]"></i>
+                        <span>{language === 'fa' ? 'لیست کوتاه خطور' : 'Short List View'}</span>
+                    </button>
+                </div>
+            </div>
+
+            <div className="flex gap-6 flex-col lg:flex-row">
+                <div className="flex-grow">
+                    {/* Render Compact Grid Layout */}
+                    {modulesLayout === 'compact' && (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                            {dashboardItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`group relative overflow-hidden rounded-2xl p-4 bg-slate-900/40 hover:bg-slate-900/85 border border-white/5 text-right rtl:text-right ltr:text-left hover:border-emerald-500/20 active:scale-98 transition-all duration-200 flex items-center justify-between gap-4 shadow-lg h-full`}
+                                >
+                                    <div className="flex items-center gap-3 flex-row-reverse text-right rtl:text-right ltr:text-left">
+                                        <div className={`w-10 h-10 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-center text-sm ${item.color} flex-shrink-0 group-hover:scale-105 transition-transform duration-300 shadow`}>
+                                            <i className={`fas ${item.icon}`}></i>
+                                        </div>
+                                        <div>
+                                            <h4 className="text-xs font-extrabold text-white group-hover:text-emerald-400 transition-colors">
+                                                {item.title}
+                                            </h4>
+                                            <p className="text-[10px] text-slate-400 line-clamp-1 font-medium mt-0.5">
+                                                {item.desc}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className={`text-[9px] font-black px-2 py-0.5 rounded-md bg-black/40 border border-white/5 ${item.color} uppercase tracking-tighter shrink-0`}>
+                                        {item.stats}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Render Short List View Layout */}
+                    {modulesLayout === 'list' && (
+                        <div className="space-y-2">
+                            {dashboardItems.map((item) => (
+                                <button
+                                    key={item.id}
+                                    type="button"
+                                    onClick={() => setActiveTab(item.id)}
+                                    className="w-full group rounded-xl p-3.5 bg-slate-900/30 hover:bg-slate-900/70 border border-white/5 text-right rtl:text-right ltr:text-left hover:border-emerald-500/10 active:scale-99 transition-all duration-150 flex items-center justify-between flex-row-reverse"
+                                >
+                                    <div className="flex items-center gap-3 flex-row-reverse text-right rtl:text-right">
+                                        <div className={`w-8 h-8 rounded-lg bg-slate-950 border border-white/5 flex items-center justify-center text-xs ${item.color} flex-shrink-0`}>
+                                            <i className={`fas ${item.icon}`}></i>
+                                        </div>
+                                        <div>
+                                            <span className="text-xs font-extrabold text-white group-hover:text-emerald-400 transition-colors block">
+                                                {item.title}
+                                            </span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-3">
+                                        <span className={`text-[9px] font-black px-2 py-0.5 rounded bg-black/40 border border-white/5 ${item.color} uppercase tracking-tighter`}>
+                                            {item.stats}
+                                        </span>
+                                        <i className="fa-solid fa-chevron-left text-[9px] text-slate-500 group-hover:text-emerald-400 transition-colors transform rtl:rotate-0 rotate-180"></i>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {/* Right Navigation Sidebar */}
+                <div className="hidden lg:block w-52 flex-shrink-0">
+                    <div className="bg-slate-900/30 border border-white/5 p-4 rounded-2xl sticky top-24">
+                        <h4 className="font-bold text-xs text-white mb-3 text-right rtl:text-right">{language === 'fa' ? 'ناوبری هدایت‌گر' : 'Sector Control'}</h4>
+                        <div className="space-y-1">
+                            {dashboardItems.map(item => (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id)}
+                                    className={`w-full text-right rtl:text-right p-2 rounded-lg text-[10px] font-bold text-slate-400 hover:bg-white/5 hover:text-emerald-400 transition flex items-center justify-between flex-row-reverse`}
+                                >
+                                    <span>{item.title}</span>
+                                    <i className={`fas ${item.icon} text-[9px] opacity-60 text-slate-500`}></i>
+                                </button>
+                            ))}
+                        </div>
                     </div>
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-tighter text-slate-500">{language === 'fa' ? 'وضعیت حریق پلتفرم' : 'Platform Sentinel Status'}</div>
-                        <div className="text-white font-extrabold">{language === 'fa' ? 'پایش لحظه‌ای زاگرس و البرز' : 'Live Ecosystem Watch'}</div>
-                    </div>
-                 </div>
-                 <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-900/30">
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                        <i className="fas fa-microchip text-lg"></i>
-                    </div>
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-tighter text-slate-500">{language === 'fa' ? 'مدل هوش مصنوعی هسته' : 'Core Processing Unit'}</div>
-                        <div className="text-white font-extrabold">Gemini 2.0 Flash Advanced</div>
-                    </div>
-                 </div>
-                 <div className="flex items-center gap-4 p-4 rounded-3xl bg-slate-900/30">
-                    <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500">
-                        <i className="fas fa-earth-americas text-lg"></i>
-                    </div>
-                    <div>
-                        <div className="text-[10px] font-black uppercase tracking-tighter text-slate-500">{language === 'fa' ? 'پوشش جغراقیایی زمینی' : 'Ground Geofencing'}</div>
-                        <div className="text-white font-extrabold">{language === 'fa' ? 'زاگرس، البرز و جنگل‌های خزری' : 'Hyrcanian, Zagros & Caspian'}</div>
-                    </div>
-                 </div>
+                </div>
             </div>
         </div>
     );
@@ -522,6 +500,8 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                     { label: t('home.map.analyzed'), color: 'bg-emerald-500' }
                 ]} />
             </div>
+            
+            <Timeline />
 
             <div className="bg-slate-800/50 rounded-xl p-6 border border-white/10 backdrop-blur-sm mb-12">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
@@ -593,6 +573,7 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                     crowdfundingCampaign={props.crowdfundingCampaign}
                     onGenerateCampaign={props.onGenerateCampaign}
                     isGeneratingCampaign={props.isLoading === 'campaign'}
+                    selectedLocation={props.selectedLocation}
                 />
             )}
         </div>
@@ -617,9 +598,13 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                 </div>
             )}
             
-            <div className="min-h-[500px]">
+            <div className="min-h-[500px] mb-24">
+                <React.Suspense fallback={<div className="flex justify-center items-center h-64 text-emerald-500">Loading...</div>}>
                 {activeTab === 'dashboard' && renderDashboard()}
                 {activeTab === 'reforestation' && renderReforestationTab()}
+                {activeTab === 'backlog' && <BacklogView />}
+                {activeTab === 'products' && <ProductsView />}
+                {activeTab === 'contact' && <ContactView />}
                 {activeTab === 'smartfiresense' && (
                     <div className="animate-fade-in">
                         <button onClick={() => setActiveTab('dashboard')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-emerald-400 font-bold text-sm">
@@ -656,6 +641,15 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                         <GrantFinderPage selectedLocation={props.selectedLocation} />
                     </div>
                 )}
+                {activeTab === 'patent' && (
+                    <div className="animate-fade-in">
+                        <button onClick={() => setActiveTab('dashboard')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-emerald-400 font-bold text-sm">
+                            <i className="fas fa-chevron-right rtl:rotate-0 rotate-180"></i>
+                            {language === 'fa' ? 'بازگشت به پیشخوان' : 'Back to Dashboard'}
+                        </button>
+                        <PatentDraftingPage />
+                    </div>
+                )}
                 {activeTab === 'estimator' && (
                    <div className="animate-fade-in">
                         <button onClick={() => setActiveTab('dashboard')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-emerald-400 font-bold text-sm">
@@ -683,6 +677,51 @@ const GreenHopePage: React.FC<GreenHopePageProps> = (props) => {
                         <NewsletterHub />
                     </div>
                 )}
+                {activeTab === 'cooperation' && (
+                    <div className="animate-fade-in">
+                        <button onClick={() => setActiveTab('dashboard')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-emerald-400 font-bold text-sm">
+                            <i className="fas fa-chevron-right rtl:rotate-0 rotate-180"></i>
+                            {language === 'fa' ? 'بازگشت به پیشخوان' : 'Back to Dashboard'}
+                        </button>
+                        <CooperationRoadmap />
+                    </div>
+                )}
+                </React.Suspense>
+            </div>
+            
+            <React.Suspense fallback={null}>
+                <AIModuleOptimizer activeTab={activeTab} />
+            </React.Suspense>
+
+            {/* APPLE-STYLE FLOATING NAVIGATION DOCK */}
+            <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] no-print">
+                <div className="bg-slate-900/60 backdrop-blur-3xl border border-white/10 p-1.5 rounded-[2rem] flex items-center gap-1 shadow-2xl ring-1 ring-white/5">
+                    {appleDockItems.map((item) => (
+                        <div key={item.id} className="relative group">
+                            <button
+                                onClick={() => setActiveTab(item.id)}
+                                className={`p-4 rounded-[1.5rem] transition-all duration-500 relative flex items-center justify-center ${
+                                    activeTab === item.id 
+                                        ? 'bg-white text-slate-950 shadow-xl scale-110' 
+                                        : 'text-slate-400 hover:bg-white/10 hover:text-white'
+                                }`}
+                            >
+                                {item.icon}
+                                {activeTab === item.id && (
+                                    <motion.div 
+                                        layoutId="dock-dot"
+                                        className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-indigo-500 rounded-full"
+                                    />
+                                )}
+                            </button>
+                            
+                            {/* Label Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 px-3 py-1 bg-slate-950 text-white text-[10px] font-black rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none uppercase tracking-widest whitespace-nowrap border border-white/10">
+                                {item.label}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </div>
     );

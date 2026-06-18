@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLanguage } from '../types';
 import { 
   Clock, 
@@ -37,7 +37,29 @@ export default function ProjectCostEstimator() {
   const [customOverheads, setCustomOverheads] = useState<number>(25000000); // 25 million Toman custom side-costs starter
   const [currency, setCurrency] = useState<'TOMAN' | 'USD'>('TOMAN');
 
+  // Advanced Area & Density Calculator Inputs
+  const [calculationMode, setCalculationMode] = useState<'area' | 'direct'>('area');
+  const [locationSize, setLocationSize] = useState<number>(3.5); // hectares
+  const [treeDensity, setTreeDensity] = useState<number>(600); // trees per hectare
+  const [autoSensors, setAutoSensors] = useState<boolean>(true); // sync sensor density with location size
+
   const exchangeRate = 600000; // Toman to USD hypothetical standard index factor for visual guide
+
+  // Derive the scale (number of trees) from location size and tree density if in area mode, otherwise use manual scale
+  const effectiveScale = useMemo(() => {
+    if (calculationMode === 'area') {
+      return Math.round(locationSize * treeDensity);
+    }
+    return scale;
+  }, [calculationMode, locationSize, treeDensity, scale]);
+
+  // Sync sensor density automatically if enabled (approx 6 sensors per hectare as standard monitoring)
+  useEffect(() => {
+    if (autoSensors && calculationMode === 'area') {
+      const suggested = Math.max(2, Math.round(locationSize * 6));
+      setSensorCount(suggested);
+    }
+  }, [locationSize, autoSensors, calculationMode]);
 
   // Localization Dictionary inside the component for seamless maintenance
   const loc = {
@@ -48,6 +70,15 @@ export default function ProjectCostEstimator() {
       // Control Panel
       settings: 'تنظیمات اولیه پروژه',
       scaleLabel: 'ابعاد پروژه (تعداد درختان / مساحت تحت پوشش - مترمربع):',
+      calculationModeLabel: 'روش ارزیابی مقیاس جنگل‌کاری:',
+      modeArea: 'محاسبه متراژ و تراکم کاشت (توصیه شده)',
+      modeDirect: 'مقداردهی مستقیم کل درختان',
+      locationSizeLabel: 'مساحت کل اراضی پروژه (هکتار):',
+      treeDensityLabel: 'تراکم طراحی‌شده غرس درخت (درخت در هر هکتار):',
+      densityLow: 'کمربند حفاظتی بادگیر (۳۰۰ اصله در هکتار)',
+      densityMed: 'جنگل احیایی تلفیقی (۶۰۰ اصله در هکتار)',
+      densityHigh: 'جنگل متراکم بومی همیار میاواکی (۱۵۰۰ اصله در هکتار)',
+      autoSensorsLabel: 'همگام‌سازی حسگرهای IoT با وسعت منطقه (~۶ حسگر در هکتار)',
       techTierLabel: 'سطح زیرساخت فنی و سرور:',
       techTierBudget: 'پایه (هاست اشتراکی + دیتابیس محلی)',
       techTierStandard: 'پیشرفته (سرور ابری کلودران + کلود اس‌کیو‌ال)',
@@ -121,6 +152,15 @@ export default function ProjectCostEstimator() {
       // Control Panel
       settings: 'Initial Project Settings',
       scaleLabel: 'Project Scale (No. of Trees / Area Covered sq.m):',
+      calculationModeLabel: 'Reforestation Scale Calculation Mode:',
+      modeArea: 'Land Area & Planting Density Calculator (Recommended)',
+      modeDirect: 'Direct Overall Target Tree Count',
+      locationSizeLabel: 'Total Restoration Land Area (Hectares):',
+      treeDensityLabel: 'Designed Tree Planting Density (Trees/Hectare):',
+      densityLow: 'Protection Windbreak Belt (300/ha)',
+      densityMed: 'Integrated Sovereign Forest (600/ha)',
+      densityHigh: 'Dense Miyawaki Eco-Urban Forest (1500/ha)',
+      autoSensorsLabel: 'Sync Smart Monitoring Sensors count with land area (~6 nodes/ha)',
       techTierLabel: 'Technical Hosting & Server Tier:',
       techTierBudget: 'Basic (Shared Hosting + Local DB)',
       techTierStandard: 'Standard (Cloud Run Serverless + Cloud SQL)',
@@ -194,6 +234,15 @@ export default function ProjectCostEstimator() {
       // Control Panel
       settings: 'الإعدادات الأساسية للمشروع',
       scaleLabel: 'حجم المشروع (عدد الأشجار / المساحة بالمتر المربع):',
+      calculationModeLabel: 'طريقة احتساب حجم التشجير:',
+      modeArea: 'حساب المساحة الإجمالية مع كثافة الأشجار (موصى به)',
+      modeDirect: 'تحديد إجمالي عدد الأشجار مباشرة',
+      locationSizeLabel: 'مساحة الأراضي الكلية (هكتار):',
+      treeDensityLabel: 'كثافة زراعة الأشجار المقررة (شجرة/هكتار):',
+      densityLow: 'حزام حماية من الرياح (٣٠٠ شجرة/هكتار)',
+      densityMed: 'غابة طبيعية متكاملة (٦٠٠ شجرة/هکتار)',
+      densityHigh: 'غابة مياواكي الحضرية الكثيفة (١٥٠٠ شجرة/هكتار)',
+      autoSensorsLabel: 'مزامنة أجهزة استشعار إنترنت الأشياء مع مساحة الأرض (~٦ أجهزة/هكتار)',
       techTierLabel: 'فئة البنية التحتية والاستضافة:',
       techTierBudget: 'أساسي (استضافة مشتركة + قاعدة بيانات محلية)',
       techTierStandard: 'متقدم (Cloud Run + قاعدة بيانات سحابية)',
@@ -269,8 +318,8 @@ export default function ProjectCostEstimator() {
     // 1. Labor Hours calculations
     // Scaled with number of trees/area units and deployment working days
     const devHours = Math.round(40 + (techTier === 'budget' ? 10 : techTier === 'standard' ? 35 : 80));
-    const opsHours = Math.round((scale * 0.15) + (sensorCount * 2.5));
-    const adminHours = Math.round(20 + (workingDays * 1.5) + (scale * 0.03));
+    const opsHours = Math.round((effectiveScale * 0.15) + (sensorCount * 2.5));
+    const adminHours = Math.round(20 + (workingDays * 1.5) + (effectiveScale * 0.03));
     const totalLaborHours = devHours + opsHours + adminHours;
 
     // Rates in Toman (Base values)
@@ -303,16 +352,16 @@ export default function ProjectCostEstimator() {
 
     // Dynamic adjustment based on sensors and scale
     const srvCompute = Math.round(srvComputeBase + (sensorCount * 25000));
-    const srvDatabase = Math.round(srvDatabaseBase + (scale * 300));
-    const srvAi = Math.round(srvAiBase + (scale * 500));
+    const srvDatabase = Math.round(srvDatabaseBase + (effectiveScale * 300));
+    const srvAi = Math.round(srvAiBase + (effectiveScale * 500));
     const srvNetwork = Math.round(srvNetworkBase + (sensorCount * 12000));
     const totalCloudMonthlyCost = srvCompute + srvDatabase + srvAi + srvNetwork;
 
     // 3. Collateral hardware and materials
-    const costSeeds = scale * 120000; // 120,000 Toman per sapling/soil
+    const costSeeds = effectiveScale * 120000; // 120,000 Toman per sapling/soil
     const costSensors = sensorCount * 1850000; // 1.85 Million Toman per IoT node
     const costAlerts = Math.round(400000 + (sensorCount * 80000) + (workingDays * 15000)); // SMS gateway
-    const costConsulting = 12000000 + (scale * 1500); // agronomists and safety specialists
+    const costConsulting = 12000000 + (effectiveScale * 1500); // agronomists and safety specialists
     const totalCollateralCost = costSeeds + costSensors + costAlerts + costConsulting;
 
     // Grand calculations
@@ -344,7 +393,7 @@ export default function ProjectCostEstimator() {
       grandTomanTotal,
       grandUSDTotal
     };
-  }, [scale, techTier, sensorCount, workingDays, customOverheads]);
+  }, [effectiveScale, techTier, sensorCount, workingDays, customOverheads]);
 
   // Format currency with standard styling
   const formatCostValue = (valueInToman: number) => {
@@ -368,7 +417,10 @@ export default function ProjectCostEstimator() {
       `Design Target: ${currentLoc.salariyehSample}`,
       divider,
       `[1] INPUT ASSUMPTIONS:`,
-      `  - Project Scale: ${scale} item targets`,
+      `  - Calculation Mode: ${calculationMode === 'area' ? 'Reforestation Area & Planting Density Calculator' : 'Direct Target Tree Count'}`,
+      calculationMode === 'area' ? `  - Project Location Size: ${locationSize} Hectares (~${(locationSize * 10000).toLocaleString()} sq. meters)` : '',
+      calculationMode === 'area' ? `  - Target Tree Planting Density: ${treeDensity} trees per hectare` : '',
+      `  - Calculated Scale Size: ${effectiveScale.toLocaleString()} Tree Sapling Targets`,
       `  - Hosting Infrastructure Tier: ${techTier.toUpperCase()}`,
       `  - IoT Network Sensing Nodes: ${sensorCount} SmartFireSense Hardware Units`,
       `  - Active Field Operations: ${workingDays} days`,
@@ -411,6 +463,10 @@ export default function ProjectCostEstimator() {
     setSensorCount(15);
     setWorkingDays(30);
     setCustomOverheads(25000000);
+    setCalculationMode('area');
+    setLocationSize(3.5);
+    setTreeDensity(600);
+    setAutoSensors(true);
   };
 
   return (
@@ -437,6 +493,7 @@ export default function ProjectCostEstimator() {
         <div className="flex items-center gap-3 self-start md:self-center">
           <button
             onClick={() => {
+              setCalculationMode('direct');
               setScale(5000);
               setSensorCount(40);
               setTechTier('enterprise');
@@ -447,9 +504,11 @@ export default function ProjectCostEstimator() {
           </button>
           <button
             onClick={() => {
-              setScale(800);
-              setSensorCount(8);
-              setTechTier('budget');
+              setCalculationMode('area');
+              setLocationSize(2.5);
+              setTreeDensity(600);
+              setSensorCount(15);
+              setTechTier('standard');
             }}
             className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700/80 rounded-md text-xs font-semibold text-blue-300 transition border border-slate-700/60"
           >
@@ -471,46 +530,211 @@ export default function ProjectCostEstimator() {
           </div>
 
           <div className="space-y-6">
-            {/* 1. Scale Input Slider */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-xs font-medium text-slate-300 block">{currentLoc.scaleLabel}</span>
-                <span className="text-xs font-mono font-bold text-emerald-400">{scale.toLocaleString()}</span>
+            {/* Reforestation Scale & Density Estimation Module */}
+            <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-xl space-y-4">
+              <span className="text-xs font-bold text-slate-305 block mb-1">
+                {currentLoc.calculationModeLabel}
+              </span>
+              
+              {/* Segmented Tab Selector */}
+              <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-lg border border-slate-850">
+                <button
+                  type="button"
+                  onClick={() => setCalculationMode('area')}
+                  className={`py-1.5 px-2 rounded-md text-[11px] font-bold transition-all duration-200 ${
+                    calculationMode === 'area'
+                      ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-300'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                  }`}
+                >
+                  {currentLoc.modeArea}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCalculationMode('direct')}
+                  className={`py-1.5 px-2 rounded-md text-[11px] font-bold transition-all duration-200 ${
+                    calculationMode === 'direct'
+                      ? 'bg-slate-800 border border-slate-705 text-slate-200'
+                      : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900/40'
+                  }`}
+                >
+                  {currentLoc.modeDirect}
+                </button>
               </div>
-              <input
-                type="range"
-                min="100"
-                max="10000"
-                step="100"
-                value={scale}
-                onChange={(e) => setScale(parseInt(e.target.value))}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-              />
-              <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
-                <span>100</span>
-                <span>5,000</span>
-                <span>10,000</span>
-              </div>
+
+              {calculationMode === 'area' ? (
+                /* Advanced Land Area & Tree Density Sub-Module */
+                <div className="space-y-4 pt-1 animate-fade-in">
+                  
+                  {/* Location Area Input Slider */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[11px] font-medium text-slate-300">
+                        {currentLoc.locationSizeLabel}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/10">
+                        {locationSize.toFixed(1)} {language === 'fa' ? 'هکتار' : 'Hectares'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0.2"
+                      max="40"
+                      step="0.1"
+                      value={locationSize}
+                      onChange={(e) => setLocationSize(parseFloat(e.target.value))}
+                      className="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-400"
+                    />
+                    <div className="flex justify-between text-[9px] text-slate-500 font-mono mt-1">
+                      <span>0.2 ha</span>
+                      <span className="text-slate-400">~{(locationSize * 10000).toLocaleString() + (language === 'fa' ? ' مترمربع' : ' m²')}</span>
+                      <span>40.0 ha</span>
+                    </div>
+                  </div>
+
+                  {/* Tree Density Slider */}
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[11px] font-medium text-slate-300">
+                        {currentLoc.treeDensityLabel}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-teal-400 bg-teal-500/10 px-1.5 py-0.5 rounded border border-teal-500/10">
+                        {treeDensity} {language === 'fa' ? 'درخت/هکتار' : 'trees/ha'}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="100"
+                      max="2000"
+                      step="50"
+                      value={treeDensity}
+                      onChange={(e) => setTreeDensity(parseInt(e.target.value))}
+                      className="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-teal-400"
+                    />
+                    
+                    {/* Density Presets Quick Buttons */}
+                    <div className="grid grid-cols-3 gap-1 mt-2">
+                      <button
+                        type="button"
+                        onClick={() => setTreeDensity(300)}
+                        className={`py-1 px-1 rounded text-[9px] font-bold border transition ${
+                          treeDensity === 300
+                            ? 'bg-teal-950 border-teal-600/60 text-teal-300'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                        title={currentLoc.densityLow}
+                      >
+                        {language === 'fa' ? 'بادگیر زراعی (۳۰۰)' : 'Agri-Wind (300)'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTreeDensity(600)}
+                        className={`py-1 px-1 rounded text-[9px] font-bold border transition ${
+                          treeDensity === 600
+                            ? 'bg-teal-950 border-teal-600/60 text-teal-300'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                        title={currentLoc.densityMed}
+                      >
+                        {language === 'fa' ? 'استاندارد بومی (۶۰۰)' : 'Standard (600)'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTreeDensity(1500)}
+                        className={`py-1 px-1 rounded text-[9px] font-bold border transition ${
+                          treeDensity === 1500
+                            ? 'bg-teal-950 border-teal-600/60 text-teal-300'
+                            : 'bg-slate-900 border-slate-800 text-slate-400 hover:text-slate-200'
+                        }`}
+                        title={currentLoc.densityHigh}
+                      >
+                        {language === 'fa' ? 'میاواکی متراکم (۱۵۰۰)' : 'Miyawaki (1500)'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Calculated Tree Scale Display Badge */}
+                  <div className="p-2 w-full bg-emerald-950/20 border border-emerald-900/30 rounded-lg flex items-center justify-between text-xs font-bold text-slate-200 mt-2">
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {language === 'fa' ? 'کاشت کل برآورد شده:' : 'Calculated Scale:'}
+                    </span>
+                    <span className="font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                      {effectiveScale.toLocaleString()} {language === 'fa' ? 'اصله نهال' : 'saplings'}
+                    </span>
+                  </div>
+
+                  {/* Auto-suggest IoT node sensor count */}
+                  <label className="flex items-start gap-2 p-2 bg-slate-950/50 rounded-lg border border-slate-850 cursor-pointer select-none mt-2">
+                    <input
+                      type="checkbox"
+                      checked={autoSensors}
+                      onChange={(e) => setAutoSensors(e.target.checked)}
+                      className="mt-0.5 accent-blue-500"
+                    />
+                    <span className="text-[10px] text-slate-400 leading-normal">
+                      {currentLoc.autoSensorsLabel}
+                    </span>
+                  </label>
+
+                </div>
+              ) : (
+                /* Simple/Direct Tree Count Input Slider */
+                <div className="space-y-4 pt-1 animate-fade-in">
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <span className="text-[11px] font-medium text-slate-300">
+                        {currentLoc.scaleLabel}
+                      </span>
+                      <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/10">
+                        {scale.toLocaleString()}
+                      </span>
+                    </div>
+                    <input
+                      type="range"
+                      min="100"
+                      max="10000"
+                      step="100"
+                      value={scale}
+                      onChange={(e) => setScale(parseInt(e.target.value))}
+                      className="w-full h-1 bg-slate-850 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                    />
+                    <div className="flex justify-between text-[9px] text-slate-500 font-mono mt-1">
+                      <span>100</span>
+                      <span>5,000</span>
+                      <span>10,000</span>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* 2. Hardware Sensors Count Input */}
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-medium text-slate-300 block">{currentLoc.sensorsLabel}</span>
-                <span className="text-xs font-mono font-bold text-blue-400">{sensorCount}</span>
+                <span className="text-xs font-mono font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/10">
+                  {sensorCount} {language === 'fa' ? 'حسگر' : 'nodes'}
+                </span>
               </div>
               <input
                 type="range"
                 min="2"
                 max="100"
                 step="1"
+                disabled={autoSensors && calculationMode === 'area'}
                 value={sensorCount}
                 onChange={(e) => setSensorCount(parseInt(e.target.value))}
-                className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className={`w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500 ${
+                  autoSensors && calculationMode === 'area' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               />
               <div className="flex justify-between text-[10px] text-slate-500 font-mono mt-1">
                 <span>2 {language === 'fa' ? 'حسگر' : 'nodes'}</span>
-                <span>50</span>
+                {autoSensors && calculationMode === 'area' && (
+                  <span className="text-[9px] text-blue-400 font-bold bg-blue-950/40 px-1.5 py-0.5 rounded-sm">
+                    {language === 'fa' ? 'همبسته با مساحت' : 'Sync with area size'}
+                  </span>
+                )}
                 <span>100</span>
               </div>
             </div>
@@ -551,7 +775,9 @@ export default function ProjectCostEstimator() {
             <div>
               <div className="flex justify-between items-center mb-2">
                 <span className="text-xs font-medium text-slate-300 block">{currentLoc.durationLabel}</span>
-                <span className="text-xs font-mono font-bold text-amber-500">{workingDays} روز</span>
+                <span className="text-xs font-mono font-bold text-amber-500">
+                  {workingDays} {language === 'fa' ? 'روز' : 'days'}
+                </span>
               </div>
               <input
                 type="range"
@@ -913,7 +1139,10 @@ export default function ProjectCostEstimator() {
                       </li>
                       <li className="flex justify-between border-b border-slate-200 pb-2">
                         <span className="text-slate-400">{currentLoc.scaleLabel}</span>
-                        <span className="text-slate-900">{scale.toLocaleString()}</span>
+                        <span className="text-slate-900 font-mono">
+                          {effectiveScale.toLocaleString()}
+                          {calculationMode === 'area' ? ` (${locationSize} ha @ ${treeDensity}/ha)` : ''}
+                        </span>
                       </li>
                       <li className="flex justify-between border-b border-slate-200 pb-2">
                         <span className="text-slate-400">{currentLoc.sensorsLabel}</span>

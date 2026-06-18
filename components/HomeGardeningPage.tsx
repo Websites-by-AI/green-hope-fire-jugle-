@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { useLanguage, HomePlant } from '../types';
 import { useToast } from './Toast';
 import { getHomeGardeningSuggestions } from '../services/geminiService';
+import { ModuleOptimizer } from './ModuleOptimizer';
 
 const HomeGardeningPage: React.FC = () => {
     const { t, language } = useLanguage();
@@ -106,6 +107,7 @@ const HomeGardeningPage: React.FC = () => {
                     </div>
                 )}
             </div>
+            <ModuleOptimizer moduleName="HomeGardening" subModules={['Conditions', 'Suggestions']} />
         </div>
     );
 };

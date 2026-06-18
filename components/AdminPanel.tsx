@@ -10,6 +10,7 @@ import {
 } from '../services/adminService';
 import { useLanguage } from '../types';
 import { useToast } from './Toast';
+import { localizeNumber } from '../types';
 
 interface AdminPanelProps {
   onBackToApp: () => void;
@@ -60,7 +61,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToApp }) => {
   // Administrative State
   const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
   const [logs, setLogs] = useState<SystemLog[]>([]);
-  const [activeTab, setActiveTab] = useState<'submissions' | 'logs' | 'settings' | 'roadmap' | 'architecture' | 'contract' | 'database' | 'investment' | 'development'>('submissions');
+  const [activeTab, setActiveTab] = useState<'submissions' | 'logs' | 'settings' | 'roadmap' | 'architecture' | 'contract' | 'database' | 'investment' | 'development' | 'opensource'>('submissions');
   const [selectedSub, setSelectedSub] = useState<AdminSubmission | null>(null);
   const [showReportPreview, setShowReportPreview] = useState<boolean>(false);
 
@@ -70,6 +71,14 @@ const AdminPanel: React.FC<AdminPanelProps> = ({ onBackToApp }) => {
   const [customModuleDesc, setCustomModuleDesc] = useState<string>('');
   const [moduleComplexity, setModuleComplexity] = useState<'low' | 'medium' | 'high'>('medium');
   const [showBoilerplate, setShowBoilerplate] = useState<boolean>(true);
+
+  // Interactive COCOMO II States
+  const [cocomoKLOC, setCocomoKLOC] = useState<number>(14);
+  const [cocomoComplexity, setCocomoComplexity] = useState<'low' | 'nominal' | 'high' | 'very_high'>('nominal');
+  const [cocomoHosting, setCocomoHosting] = useState<'STANDARD' | 'PREMIUM' | 'ENTERPRISE'>('STANDARD');
+  const [mvpFilterActive, setMvpFilterActive] = useState<boolean>(false);
+  const [copiedEvolvePrompt, setCopiedEvolvePrompt] = useState<boolean>(false);
+  const [injectActiveModuleAsPhase6, setInjectActiveModuleAsPhase6] = useState<boolean>(false);
 
   // Dynamic AI Suggested Modules States & Callback Helper
   const [aiGeneratedModule, setAiGeneratedModule] = useState<{
@@ -215,7 +224,7 @@ export const FungiCanopyLinker = () => {
   };
 
   // Settings Toggles
-  const [modelType, setModelType] = useState('gemini-1.5-flash');
+  const [modelType, setModelType] = useState('gemini-3.5-flash');
   const [groundingEnabled, setGroundingEnabled] = useState(true);
   const [offlineFallback, setOfflineFallback] = useState(false);
   const [maxReforestationPerCall, setMaxReforestationPerCall] = useState(10);
@@ -546,8 +555,10 @@ export const FungiCanopyLinker = () => {
             <i className="fa-solid fa-layer-group"></i>
           </div>
           <div>
-            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">Total Requests</span>
-            <span className="text-2xl font-bold text-white font-mono">{totalSubmissions}</span>
+            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">
+              {language === 'fa' ? 'مجموع درخواست‌ها' : language === 'ar' ? 'إجمالي الطلبات' : 'Total Requests'}
+            </span>
+            <span className="text-2xl font-bold text-white font-mono">{localizeNumber(totalSubmissions, language)}</span>
           </div>
         </div>
 
@@ -556,8 +567,10 @@ export const FungiCanopyLinker = () => {
             <i className="fa-solid fa-hourglass-half"></i>
           </div>
           <div>
-            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">Pending Action</span>
-            <span className="text-2xl font-bold text-white font-mono">{pendingCount}</span>
+            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">
+              {language === 'fa' ? 'درخواست‌های در انتظار' : language === 'ar' ? 'الإجراءات المعلقة' : 'Pending Action'}
+            </span>
+            <span className="text-2xl font-bold text-white font-mono">{localizeNumber(pendingCount, language)}</span>
           </div>
         </div>
 
@@ -566,8 +579,10 @@ export const FungiCanopyLinker = () => {
             <i className="fa-solid fa-tree"></i>
           </div>
           <div>
-            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">Tree Initiatives</span>
-            <span className="text-2xl font-bold text-white font-mono">{reforestationCount}</span>
+            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">
+              {language === 'fa' ? 'ابتکارهای جنگل‌کاری' : language === 'ar' ? 'مبادرات التشجير' : 'Tree Initiatives'}
+            </span>
+            <span className="text-2xl font-bold text-white font-mono">{localizeNumber(reforestationCount, language)}</span>
           </div>
         </div>
 
@@ -576,8 +591,10 @@ export const FungiCanopyLinker = () => {
             <i className="fa-solid fa-hand-holding-dollar"></i>
           </div>
           <div>
-            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">Approved Goals</span>
-            <span className="text-2xl font-bold text-white font-mono">{approvedGoalSum.toLocaleString()}</span>
+            <span className="text-xs text-slate-400 block font-medium uppercase font-sans">
+              {language === 'fa' ? 'اهداف تایید شده' : language === 'ar' ? 'الأهداف المعتمدة' : 'Approved Goals'}
+            </span>
+            <span className="text-2xl font-bold text-white font-mono">{localizeNumber(approvedGoalSum, language)}</span>
           </div>
         </div>
       </div>
@@ -602,7 +619,7 @@ export const FungiCanopyLinker = () => {
                   {language === 'fa' ? '📋 درخواست‌های بومی' : '📋 Inquiries'}
                 </span>
                 <span className="text-[9px] bg-emerald-500/10 text-emerald-400 px-1.5 py-0.5 rounded font-mono font-bold">
-                  {submissions.length}
+                  {localizeNumber(submissions.length, language)}
                 </span>
               </button>
 
@@ -616,7 +633,7 @@ export const FungiCanopyLinker = () => {
                   {language === 'fa' ? '🖥️ لاگ‌های زنده کلاود' : '🖥️ Console Logs'}
                 </span>
                 <span className="text-[9px] bg-slate-950 text-slate-400 px-1.5 py-0.5 rounded font-mono">
-                  {logs.length}
+                  {localizeNumber(logs.length, language)}
                 </span>
               </button>
 
@@ -700,6 +717,20 @@ export const FungiCanopyLinker = () => {
                 <span className="flex items-center gap-2">
                   <i className="fa-solid fa-sliders text-emerald-400 w-4"></i>
                   {language === 'fa' ? '⚙️ پارامترهای پردازشی' : '⚙️ Configurations'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setActiveTab('opensource')}
+                className={`w-full text-right lg:text-left flex-shrink-0 flex items-center justify-between gap-3 px-4 py-3 rounded-xl transition text-xs font-bold leading-none ${activeTab === 'opensource' ? 'bg-slate-800 border-r-4 lg:border-r-0 lg:border-l-4 border-emerald-500 text-emerald-400 font-extrabold shadow-md' : 'text-slate-400 hover:text-white hover:bg-slate-800/50'}`}
+              >
+                <span className="flex items-center gap-2">
+                  <i className="fa-solid fa-gift text-amber-400 w-4"></i>
+                  {language === 'fa' ? '⭐️ سپاس‌گزاری و اعتبار متن‌باز' : '⭐️ OS Heritage & AI Tributes'}
+                </span>
+                <span className="text-[9px] bg-amber-500/10 text-amber-400 px-1.5 py-0.5 rounded font-mono font-bold animate-pulse">
+                  ♥
                 </span>
               </button>
             </nav>
@@ -1088,7 +1119,219 @@ export const FungiCanopyLinker = () => {
                         : 'Acquiring satellite imagery indices for coverage validation, autonomous thermal drone inspections, and global certified token exchanges.'}
                     </p>
                   </div>
+
+                  {(() => {
+                    const activeModInfo = (() => {
+                      if (aiGeneratedModule) {
+                        return {
+                          title: aiGeneratedModule.title,
+                          sub: aiGeneratedModule.sub,
+                          desc: aiGeneratedModule.desc,
+                          badge: aiGeneratedModule.badge,
+                          hours: aiGeneratedModule.hours,
+                          cost: aiGeneratedModule.costTomans
+                        };
+                      }
+                      if (customModuleName.trim().length > 0) {
+                        return {
+                          title: customModuleName,
+                          sub: 'Custom Active Module',
+                          desc: customModuleDesc || (language === 'fa' ? 'ماژول سفارشی طراحی شده توسط مدیر توسعه سبز.' : 'Custom Module designed by R&D administrators.'),
+                          badge: 'Custom Admin Node',
+                          hours: cocomoKLOC * 12,
+                          cost: cocomoKLOC * 12 * 45000
+                        };
+                      }
+                      const preset = [
+                        {
+                          title: 'Active SAR Subsurface Soil Radar',
+                          sub: 'Iceye-inspired 🇫🇮',
+                          desc: language === 'fa' ? 'رصد عمق رطوبت و یخ‌زدگی ریشه‌های نهال با سنجش امواج مایکروویو فعال رادار فضایی.' : 'Satellite mapping of subsoil tree root moisture.',
+                          badge: 'SAR Satellite Radar',
+                          hours: 18 * 12,
+                          cost: 18 * 12 * 45000
+                        },
+                        {
+                          title: 'Bio-acoustic Canopy Protector AI',
+                          sub: 'Rainforest Connection-inspired 🌍',
+                          desc: language === 'fa' ? 'پایش مستمر صوتی جهت ردیابی اره‌برقی، شلیک تفنگ و حریق در جنگل‌ها با یادگیری عمیق.' : 'Acoustical listening matrix tracking logging & forest fire events.',
+                          badge: 'Audio AI Classifier',
+                          hours: 11 * 12,
+                          cost: 11 * 12 * 45000
+                        },
+                        {
+                          title: 'Digital Carbon-Bond Smart Contract',
+                          sub: 'Flowcarbon-inspired 🇺🇸',
+                          desc: language === 'fa' ? 'توکنایز کردن لایو عواید کاشت صنوبر در بستر زنجیره بلوکی سولانا با قرارداد هوشمند.' : 'On-chain Solana carbon-backed tokenization.',
+                          badge: 'Web3 Solana ERC-721',
+                          hours: 16 * 12,
+                          cost: 16 * 12 * 45000
+                        },
+                        {
+                          title: 'Canopy Biomass Dryness Tracker',
+                          sub: 'Overstory-inspired 🇳🇱',
+                          desc: language === 'fa' ? 'تحلیل داده‌های چندطیفی مادون قرمز ماهواره‌ای برای تشخیص سریع درختان مستعد آتش‌سوزی.' : 'Spectral thermal tracking for forest fire mitigation.',
+                          badge: 'Thermal Infrared ML',
+                          hours: 13 * 12,
+                          cost: 13 * 12 * 45000
+                        },
+                        {
+                          title: 'Mycorrhizal Underground Fungi Network',
+                          sub: 'Fungi-Underground-inspired 🇬🇧',
+                          desc: language === 'fa' ? 'پیش‌بینی بقای گونه‌های بادام دیم بر اساس پیوستگی میکروب‌های همزیست خاک جنگل.' : 'Deep node graph classifier tracking fungal survival.',
+                          badge: 'ML Node Graph classifier',
+                          hours: 8 * 12,
+                          cost: 8 * 12 * 45000
+                        }
+                      ][selectedTrendIndex] || {
+                        title: 'Active SAR Subsurface Soil Radar',
+                        sub: 'Iceye-inspired 🇫🇮',
+                        desc: language === 'fa' ? 'رصد عمق رطوبت و یخ‌زدگی ریشه‌های نهال با سنجش امواج مایکروویو فعال رادار فضایی.' : 'Satellite mapping of subsoil tree root moisture.',
+                        badge: 'SAR Satellite Radar',
+                        hours: 18 * 12,
+                        cost: 18 * 12 * 45000
+                      };
+                      return preset;
+                    })();
+
+                    return injectActiveModuleAsPhase6 ? (
+                      <div className="relative pr-8 space-y-1 border-r-2 border-indigo-500/30 mr-[-2px] pr-8 pb-2 pt-2 bg-indigo-500/5 rounded-xl border border-white/5 pr-6 pl-4 animate-fade-in text-right" dir="rtl">
+                        <div className="absolute right-2.5 top-3.5 w-3.5 h-3.5 rounded-full bg-indigo-500 border-2 border-slate-900 ring-4 ring-indigo-500/20"></div>
+                        <strong className="text-xs font-black text-indigo-400 block pt-1">
+                          {language === 'fa' 
+                            ? `فاز ششم پویای هوش‌مصنوعی: پیاده‌سازی فوری ماژول تعاملی "${activeModInfo.title}"` 
+                            : `Dynamic Phase 6 AI Integration: Launch of "${activeModInfo.title}"`}
+                        </strong>
+                        <span className="text-[9px] font-mono font-bold bg-indigo-500/25 border border-indigo-500/30 text-indigo-300 px-2.5 py-0.5 rounded leading-none inline-block my-2">
+                          {activeModInfo.badge} • Effort Level: {activeModInfo.hours} hours
+                        </span>
+                        <p className="text-slate-300 text-xs leading-relaxed max-w-4xl">
+                          {activeModInfo.desc} {language === 'fa' 
+                            ? `این فاز پویا به عنوان پاسخ انطباقی به ارزیابی هوشمند ترندها با سرمایه‌گذاری فنی تقریبی ${activeModInfo.cost.toLocaleString()} تومانی به مسیر رشد نقشه راه امید سبز افزوده گردیده است.` 
+                            : `Added dynamically as an adaptive response to sustainability R&D calculations with estimated budget of ${activeModInfo.cost.toLocaleString()} Tomans.`}
+                        </p>
+                      </div>
+                    ) : null;
+                  })()}
+
                 </div>
+
+                {(() => {
+                  const activeModInfo = (() => {
+                    if (aiGeneratedModule) {
+                      return {
+                        title: aiGeneratedModule.title,
+                        sub: aiGeneratedModule.sub,
+                        desc: aiGeneratedModule.desc,
+                        badge: aiGeneratedModule.badge,
+                        hours: aiGeneratedModule.hours,
+                        cost: aiGeneratedModule.costTomans
+                      };
+                    }
+                    if (customModuleName.trim().length > 0) {
+                      return {
+                        title: customModuleName,
+                        sub: 'Custom Active Module',
+                        desc: customModuleDesc || (language === 'fa' ? 'ماژول سفارشی طراحی شده توسط مدیر توسعه سبز.' : 'Custom Module designed by R&D administrators.'),
+                        badge: 'Custom Admin Node',
+                        hours: cocomoKLOC * 12,
+                        cost: cocomoKLOC * 12 * 45000
+                      };
+                    }
+                    const preset = [
+                      {
+                        title: 'Active SAR Subsurface Soil Radar',
+                        sub: 'Iceye-inspired 🇫🇮',
+                        desc: language === 'fa' ? 'رصد عمق رطوبت و یخ‌زدگی ریشه‌های نهال با سنجش امواج مایکروویو فعال رادار فضایی.' : 'Satellite mapping of subsoil tree root moisture.',
+                        badge: 'SAR Satellite Radar',
+                        hours: 18 * 12,
+                        cost: 18 * 12 * 45000
+                      },
+                      {
+                        title: 'Bio-acoustic Canopy Protector AI',
+                        sub: 'Rainforest Connection-inspired 🌍',
+                        desc: language === 'fa' ? 'پایش مستمر صوتی جهت ردیابی اره‌برقی، شلیک تفنگ و حریق در جنگل‌ها با یادگیری عمیق.' : 'Acoustical listening matrix tracking logging & forest fire events.',
+                        badge: 'Audio AI Classifier',
+                        hours: 11 * 12,
+                        cost: 11 * 12 * 45000
+                      },
+                      {
+                        title: 'Digital Carbon-Bond Smart Contract',
+                        sub: 'Flowcarbon-inspired 🇺🇸',
+                        desc: language === 'fa' ? 'توکنایز کردن لایو عواید کاشت صنوبر در بستر زنجیره بلوکی سولانا با قرارداد هوشمند.' : 'On-chain Solana carbon-backed tokenization.',
+                        badge: 'Web3 Solana ERC-721',
+                        hours: 16 * 12,
+                        cost: 16 * 12 * 45000
+                      },
+                      {
+                        title: 'Canopy Biomass Dryness Tracker',
+                        sub: 'Overstory-inspired 🇳🇱',
+                        desc: language === 'fa' ? 'تحلیل داده‌های چندطیفی مادون قرمز ماهواره‌ای برای تشخیص سریع درختان مستعد آتش‌سوزی.' : 'Spectral thermal tracking for forest fire mitigation.',
+                        badge: 'Thermal Infrared ML',
+                        hours: 13 * 12,
+                        cost: 13 * 12 * 45000
+                      },
+                      {
+                        title: 'Mycorrhizal Underground Fungi Network',
+                        sub: 'Fungi-Underground-inspired 🇬🇧',
+                        desc: language === 'fa' ? 'پیش‌بینی بقای گونه‌های بادام دیم بر اساس پیوستگی میکروب‌های همزیست خاک جنگل.' : 'Deep node graph classifier tracking fungal survival.',
+                        badge: 'ML Node Graph classifier',
+                        hours: 8 * 12,
+                        cost: 8 * 12 * 45000
+                      }
+                    ][selectedTrendIndex] || {
+                      title: 'Active SAR Subsurface Soil Radar',
+                      sub: 'Iceye-inspired 🇫🇮',
+                      desc: language === 'fa' ? 'رصد عمق رطوبت و یخ‌زدگی ریشه‌های نهال با سنجش امواج مایکروویو فعال رادار فضایی.' : 'Satellite mapping of subsoil tree root moisture.',
+                      badge: 'SAR Satellite Radar',
+                      hours: 18 * 12,
+                      cost: 18 * 12 * 45000
+                    };
+                    return preset;
+                  })();
+
+                  return (
+                    <div className="mt-8 pt-6 border-t border-white/5 bg-slate-900/40 p-5 rounded-2xl border border-indigo-500/15 text-right flex flex-col lg:flex-row items-center justify-between gap-4" dir="rtl">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1.5 justify-start md:justify-end">
+                          <span className="text-[9px] bg-indigo-500/20 text-indigo-300 px-2.5 py-0.5 rounded-full font-bold font-mono">INTELLIGENT RECOGNITION</span>
+                          <h4 className="font-bold text-xs text-indigo-400">{language === 'fa' ? 'اتصال هوش شبیه‌ساز به مستند نقشه راه' : 'Intelligent Roadmap Sync Core'}</h4>
+                        </div>
+                        <p className="text-[10px] text-slate-400 leading-normal">
+                          {language === 'fa' 
+                            ? `در حال حاضر ماژول فعال در بخش آرانددی: "${activeModInfo.title}" (${activeModInfo.badge}) طراحی فاز اجرایی: ${activeModInfo.hours} ساعت کار فنی.` 
+                            : `Currently active R&D blueprint: "${activeModInfo.title}" with estimated ${activeModInfo.hours} workflow hours.`}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setInjectActiveModuleAsPhase6(!injectActiveModuleAsPhase6);
+                          addToast(
+                            language === 'fa' 
+                              ? (injectActiveModuleAsPhase6 ? 'ماژول پویا از نقشه راه برداشته شد.' : `ماژول "${activeModInfo.title}" به عنوان فاز ششم زنده با موفقیت به نقشه راه تزریق شد!`)
+                              : (injectActiveModuleAsPhase6 ? 'Active module unlinked from roadmap.' : `Successfully injected "${activeModInfo.title}" as live Phase 6 on the roadmap!`),
+                            'success'
+                          );
+                        }}
+                        className={`px-4 py-2.5 rounded-xl text-[10px] font-black tracking-wide uppercase transition-all duration-300 flex items-center justify-center gap-1.5 select-none active:scale-95 shadow-md shrink-0 ${
+                          injectActiveModuleAsPhase6 
+                            ? 'bg-rose-600 hover:bg-rose-700 text-white shadow-rose-900/10' 
+                            : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-900/10'
+                        }`}
+                      >
+                        <i className={`fa-solid ${injectActiveModuleAsPhase6 ? 'fa-link-slash mr-1' : 'fa-network-wired mr-1'}`}></i>
+                        <span>
+                          {language === 'fa' 
+                            ? (injectActiveModuleAsPhase6 ? '💥 حذف این فاز فعال از چارت رشد' : '✨ تزریق این ماژول به عنوان فاز ۶ نقشه راه')
+                            : (injectActiveModuleAsPhase6 ? '💥 Unlink from Growth Road' : '✨ Inject as Dynamic Phase 6 Milestone')}
+                        </span>
+                      </button>
+                    </div>
+                  );
+                })()}
+
               </div>
 
               {/* Dynamic Auto-Scaler Engine Sandbox */}
@@ -1728,7 +1971,7 @@ export const FungiCanopyLinker = () => {
 
           {/* Configurations Tab Stage */}
           {activeTab === 'settings' && (
-            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-6 shadow-xl space-y-6">
+            <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-6 shadow-xl space-y-6 text-right" dir="rtl">
               <div>
                 <h3 className="font-bold text-lg text-white">Global AI Strategy Configurations</h3>
                 <p className="text-xs text-slate-400">Instruct current application execution behaviors on client triggers.</p>
@@ -1744,9 +1987,9 @@ export const FungiCanopyLinker = () => {
                     onChange={(e) => setModelType(e.target.value)}
                     className="w-full bg-slate-900 border border-slate-700 focus:border-emerald-500 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none"
                   >
-                    <option value="deepseek-r1">DeepSeek R1 (DeepSeek-R1-0528) [Active]</option>
-                    <option value="gemini-2.0-pro">Gemini 2.0 Pro Experimental</option>
-                    <option value="gemini-2.5-flash">Gemini 2.5 Flash Enterprise</option>
+                    <option value="gemini-3.5-flash">Gemini 3.5 Flash [Active]</option>
+                    <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash Lite [High Velocity]</option>
+                    <option value="gemini-flash-latest">Gemini Flash (Latest) [Consolidated]</option>
                   </select>
                 </div>
 
@@ -1754,7 +1997,8 @@ export const FungiCanopyLinker = () => {
                   <label className="block text-xs text-slate-400 font-bold mb-2 uppercase tracking-wide">
                     Simulation Offline Mode
                   </label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 justify-end">
+                    <span className="text-xs text-slate-300">Force localized cache callback</span>
                     <button
                       type="button"
                       onClick={() => setOfflineFallback(!offlineFallback)}
@@ -1762,7 +2006,6 @@ export const FungiCanopyLinker = () => {
                     >
                       <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${offlineFallback ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
-                    <span className="text-xs text-slate-300">Force localized cache callback</span>
                   </div>
                 </div>
 
@@ -1770,7 +2013,8 @@ export const FungiCanopyLinker = () => {
                   <label className="block text-xs text-slate-400 font-bold mb-2 uppercase tracking-wide">
                     Google Search Grounding (Live Data)
                   </label>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 justify-end">
+                    <span className="text-xs text-slate-300">Connect to regional data feeds</span>
                     <button
                       type="button"
                       onClick={() => setGroundingEnabled(!groundingEnabled)}
@@ -1778,7 +2022,6 @@ export const FungiCanopyLinker = () => {
                     >
                       <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${groundingEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
                     </button>
-                    <span className="text-xs text-slate-300">Connect to regional data feeds</span>
                   </div>
                 </div>
 
@@ -1822,564 +2065,844 @@ export const FungiCanopyLinker = () => {
           {/* Development Support & Intelligent Startup Advisor Stage */}
           {activeTab === 'development' && (
             <div className="space-y-6 animate-fade-in text-right" dir="rtl">
-              <div className="bg-slate-800/20 border border-white/5 rounded-2xl p-6 shadow-xl space-y-6">
-                
-                {/* Header section explaining the "Living System" layout */}
-                <div className="border-b border-indigo-500/10 pb-5">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="bg-slate-950/60 rounded-[2.5rem] border border-white/5 p-8 md:p-12 shadow-2xl overflow-hidden backdrop-blur-md relative">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-[120px] pointer-events-none"></div>
+
+                {/* Banner Header: Living System Style */}
+                <div className="border-b border-indigo-500/10 pb-6 mb-8 relative z-10">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                     <div>
-                      <span className="text-[10px] bg-indigo-500/20 text-indigo-300 font-bold px-2 py-1 rounded-full uppercase tracking-wider mb-2 inline-block">
-                        {language === 'fa' ? '🧬 قابلیت فرگشت نرم‌افزاری و پیشنهادهای هوشمند ترندها' : '🧬 Software Evolution Framework'}
-                      </span>
-                      <h3 className="font-bold text-lg text-white">
-                        {language === 'fa' ? '🧠 موتور توسعه خود‌آراسته و پیشنهاد ماژول‌های نوین زیست‌محیطی' : '🧠 App Evolution & Growth Advisor'}
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <span className="text-[10px] bg-indigo-500/20 text-indigo-300 font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-indigo-500/30">
+                          {language === 'fa' ? 'بخش ۱ و ۲: پلتفرم هوشمند (Living System)' : 'Section 1 & 2: Living System Platform'}
+                        </span>
+                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full border border-emerald-500/20">
+                          {language === 'fa' ? 'چرخه توسعه زنده' : 'Active Evolution Engine'}
+                        </span>
+                      </div>
+                      <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight">
+                        {language === 'fa' ? 'پیشنهاد هوشمند ماژول‌ها و سامانه تخمین مهندسی COCOMO 2.0' : 'Intelligent Module Benchmarker & COCOMO 2.0 Estimator'}
                       </h3>
-                      <p className="text-xs text-slate-400 mt-1">
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
                         {language === 'fa' 
-                          ? 'پروژه اراضی امید سبز به عنوان یک ارگانیسم زنده، ترندهای روز استارتاپ‌های اقلیمی را تحلیل کرده و راهکار مهندسی را شبیه‌سازی می‌کند.' 
-                          : 'As a living system, GreenHope tracks climate SaaS trends, providing automated engineering scaffolding and labor cost structures.'}
+                          ? 'پلتفرم امید سبز به عنوان یک موجود زنده، ترندهای روز حفاظت اقلیمی را رصد کرده، گام‌های نقشه راه را پیشنهاد داده و هزینه‌های کدنویسی را برآورد فنی می‌کند.' 
+                          : 'Green Hope behaves as a living system: automatically identifying clean-tech trends, simulating code scale, and computing budget metrics.'}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2 self-start sm:self-center font-mono text-xs bg-indigo-550/10 border border-indigo-500/20 text-indigo-300 px-3 py-1.5 rounded-xl">
-                      <span className="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
-                      <span>Trend Analytics Live</span>
+                    <div className="flex items-center gap-2.5 self-start lg:self-center font-mono text-xs bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 px-4 py-2 rounded-2xl shrink-0 shadow-lg">
+                      <span className="w-2.5 h-2.5 rounded-full bg-indigo-400 animate-ping"></span>
+                      <span className="font-bold">Ecosystem Model Active</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Persian Narrative text about making projects living entities */}
-                <p className="text-xs font-semibold text-slate-300 bg-slate-900/40 border border-indigo-500/10 p-4 rounded-xl leading-relaxed">
+                {/* Core intro text block */}
+                <p className="text-xs font-semibold text-slate-300 bg-slate-900/50 border border-indigo-550/15 p-5 rounded-2xl leading-relaxed relative z-10 mb-8 shadow-inner">
                   {language === 'fa'
-                    ? '💡 برای آنکه پلتفرمی به یک «موجود زنده و رقابت‌پذیر» مبدل گردد، همواره باید تکنولوژی‌های موفق استارتاپ‌های بزرگ دنیا را رصد و نمونه‌سازی الکترونیکی کند. این بخش با تحلیل ترندهای برتر حوزه اقلیم، میزان ساعات توسعه نرم‌افزار، هزینه زیرساخت و حتی کدهای بهینه گام‌های اولیه را در اختیارتان می‌گذارد تا ایده مقتدرانه شما خاموشی نگیرد.'
-                    : '💡 To ensure a SaaS behaves like a "living organism", it must continuously observe and model global success stories. This module tracks and simulates cost formulas, server overheads, and initial React/API templates to keep you ahead.'}
+                    ? '💡 انتقال از یک «ابزار استاتیک» به یک «سیستم زنده»: برای ارتقاء مداوم، پلتفرم باید سناریوهای موفق رقبای سبز جهان را مانیتور کند. در این پنل، حسگر بر اساس متدولوژی COCOMO 2.0 میزان تلاش تیمی را محاسبه کرده و با فشردن یک کلیک، پرامپت همیار کدنوسی (AI Pair-Programmer) را برای توسعه فوری خروجی می‌دهد.'
+                    : '💡 Evolution to a "Living System": To keep the application resilient, the engine monitors global sustainability startups, executes detailed COCOMO II effort analysis, and outputs ready-to-run AI coding specs.'}
                 </p>
 
-                {/* Real-time AI Automated Trend Recommender Trigger */}
-                <div className="bg-gradient-to-br from-indigo-950/40 via-slate-900/40 to-slate-950 rounded-2xl border border-indigo-500/25 p-5 space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                      <h4 className="font-bold text-xs text-indigo-300">
-                        {language === 'fa' ? '🧠 سیستم مقتدر و خودکار هوش مصنوعی مانیتورینگ نوآوری سبز زنده' : '🧠 Dynamic Live Startup Module recommender'}
-                      </h4>
-                      <p className="text-[10px] text-slate-400 mt-1">
-                        {language === 'fa' 
-                          ? 'بگذارید الگوریتم‌های زنده بر اساس ترند رقبای اقلیمی جهان، راهکار تکمیلی هوشمند به همراه تخمین hours/cost و یک نمونه سورس‌کد لایو برایتان پیشنهاد دهند.' 
-                          : 'Have the AI analyze the green ecosystem to recommend modules, project hours, code templates and budgets.'}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      disabled={aiLoading}
-                      onClick={fetchAiTrendSuggestion}
-                      className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 active:scale-95 shrink-0"
-                    >
-                      {aiLoading ? (
-                        <>
-                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                          <span>{language === 'fa' ? 'رصد ترندهای جهانی رقبای اقلیمی...' : 'Scanning green trends...'}</span>
-                        </>
-                      ) : (
-                        <>
-                          <i className="fa-solid fa-wand-magic-sparkles text-indigo-200"></i>
-                          <span>{language === 'fa' ? '🤖 عیب‌یابی و دریافت پیشنهاد خودکار ماژول جدید' : '🤖 Request Spot AI Innovation Recommendation'}</span>
-                        </>
-                      )}
-                    </button>
+                {/* Section 1: Business Intelligence & Eco-SaaS Trend Spotting */}
+                <div className="space-y-6 relative z-10">
+                  <div className="flex items-center gap-3 border-r-4 border-indigo-500 pr-3">
+                    <h4 className="text-base font-black text-slate-100">
+                      {language === 'fa' ? 'بخش اول: هوش تجاری و رصد خودکار ترندها' : 'Part 1: Business Intelligence & Automated Trend Spotting'}
+                    </h4>
                   </div>
 
-                  {/* If an AI recommendation has been generated, render its live board */}
-                  {aiGeneratedModule && (
-                    <div className="border border-indigo-500/20 bg-slate-950/40 p-4 rounded-xl space-y-4 animate-fade-in text-right" dir="rtl">
-                      <div className="flex justify-between items-start border-b border-indigo-550/15 pb-2">
-                        <div>
-                          <span className="text-[9px] bg-indigo-500/20 text-indigo-300 font-extrabold px-2 py-0.5 rounded font-mono uppercase tracking-wider">
-                            {aiGeneratedModule.badge}
-                          </span>
-                          <span className="text-[10px] text-indigo-400 font-bold mr-2">{aiGeneratedModule.sub}</span>
-                        </div>
-                        <h5 className="font-extrabold text-sm text-white">{aiGeneratedModule.title}</h5>
-                      </div>
-                      
-                      <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                        {aiGeneratedModule.desc}
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                          <span className="text-[9px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '🛠️ برآورد ساعات کارهای برنامه‌نویسی:' : 'Labor Estimates:'}</span>
-                          <span className="text-xs font-mono font-black text-white">{aiGeneratedModule.hours} ساعت کاری</span>
-                        </div>
-                        <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                          <span className="text-[9px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '💰 هزینه توسعه و بستر ابری:' : 'Est. Dev Costs:'}</span>
-                          <span className="text-xs font-mono font-black text-emerald-400">{(aiGeneratedModule.costTomans || 15000000).toLocaleString()} تومان</span>
-                        </div>
-                        <div className="p-3 bg-slate-950 rounded-lg border border-slate-800">
-                          <span className="text-[9px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '⚙️ پشته تکنولوژی پیشنهادی:' : 'Suggested Tech Stack:'}</span>
-                          <span className="text-[10px] text-indigo-300 font-bold leading-tight block mt-0.5">{aiGeneratedModule.techStack}</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-950 rounded-xl border border-slate-850 overflow-hidden text-left" dir="ltr">
-                        <div className="bg-slate-900 border-b border-slate-850 px-4 py-2 flex justify-between items-center">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 rounded-full bg-rose-500/80"></div>
-                            <div className="w-2 h-2 rounded-full bg-amber-500/80"></div>
-                            <div className="w-2 h-2 rounded-full bg-emerald-500/80"></div>
-                          </div>
-                          <div className="text-[9px] font-mono font-bold text-slate-500 flex items-center gap-2">
-                            <span>ai recommendation template</span>
-                            <button 
-                              type="button"
-                              onClick={() => {
-                                navigator.clipboard.writeText(aiGeneratedModule.codeTemplate);
-                                addToast(language === 'fa' ? 'کد الگوی پیشنهادی هوش مصنوعی کپی شد!' : 'AI Code template copied!', 'success');
-                              }}
-                              className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-white transition rounded text-[8px] font-bold text-slate-400"
-                            >
-                              Copy Code
-                            </button>
-                          </div>
-                        </div>
-                        <pre className="p-3 overflow-x-auto text-[9px] font-mono leading-relaxed text-slate-300 max-h-[160px] bg-slate-950">
-                          <code>{aiGeneratedModule.codeTemplate}</code>
-                        </pre>
-                      </div>
-
-                      <div className="flex justify-start gap-2 pt-1.5" dir="rtl">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newLog: SystemLog = {
-                              id: `log-ai-${Date.now()}`,
-                              timestamp: new Date().toISOString(),
-                              level: 'success',
-                              message: `🤖 AI Innovation pipeline successfully linked: "${aiGeneratedModule.title}" suggested by GreenHope Intelligence engine.`
-                            };
-                            setLogs(prev => [newLog, ...prev]);
-                            addToast(language === 'fa' ? `ماژول هوشمند "${aiGeneratedModule.title}" به لاگ‌های سیستمی شما پیوند خورد و نمونه‌سازی شد!` : `AI module linked to logs successfully!`, 'success');
-                          }}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-550 text-white font-bold text-[10px] rounded-lg shadow transition active:scale-95 flex items-center gap-1.5"
-                        >
-                          <i className="fa-solid fa-rocket animate-bounce"></i>
-                          <span>{language === 'fa' ? '🚀 پیوند نوآوری هوشمند به ساختار پروژه و شبیه‌سازی استقرار' : '🚀 Mount AI Module to local session'}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* presets selector from successful startups */}
-                <div>
-                  <h4 className="font-black text-xs text-white uppercase tracking-wider mb-3">
-                    {language === 'fa' ? '📊 الگوگیری از پیشروان اقلیمی دنیا (استارتاپ‌های مشابه):' : 'Benchmark Global Wildfire & Protection Candidates:'}
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Trends Grid: Clickable Startup Presets */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     {[
                       {
-                        title: 'Active Wildfire Forecasting (DrySpann)',
-                        sub: 'مشابه OroraTech 🇩🇪',
-                        desc: 'پایش لحظه‌ای و سنجش دمایی اراضی با پردازش تصاویر پیشرفته ماهواره‌های مادون قرمز موج کوتاه.',
-                        badge: 'Thermal Infrared ML',
+                        title: 'Active SAR Subsurface Soil Radar',
+                        sub: 'مشابه استارتاپ Iceye 🇫🇮',
+                        desc: 'رصد عمق رطوبت و یخ‌زدگی ریشه‌های نهال با سنجش امواج مایکروویو فعال رادار فضایی.',
+                        badge: 'SAR Satellite Radar',
+                        kloc: 18,
+                        complexity: 'high' as const,
                         index: 0
                       },
                       {
-                        title: 'Bio-acoustic Canopy Protector',
+                        title: 'Bio-acoustic Canopy Protector AI',
                         sub: 'مشابه Rainforest Connection 🌍',
-                        desc: 'پایش مداوم صوتی صنوبرها و پسته وحشی جهت تشخیص اره برقی، صدای مشکوک حریق یا شلیک انسان.',
+                        desc: 'پایش مستمر صوتی جهت ردیابی اره‌برقی، شلیک تفنگ و حریق در جنگل‌ها با یادگیری عمیق.',
                         badge: 'Audio AI Classifier',
+                        kloc: 11,
+                        complexity: 'nominal' as const,
                         index: 1
                       },
                       {
-                        title: 'Interactive Fire Containment Planner',
-                        sub: 'مشابه DroneSeed 🚁',
-                        desc: 'برنامه‌ریزی ترابری هوایی جهادی جهت اعزام ناوگان ضدحریق و کپسول‌های پاشش نیتروژن روی جنگل.',
-                        badge: 'GIS Dispatcher',
+                        title: 'Digital Carbon-Bond Smart Contract',
+                        sub: 'مشابه Flowcarbon 🇺🇸',
+                        desc: 'توکنایز کردن لایو عواید کاشت صنوبر در بستر زنجیره بلوکی سولانا با قرارداد هوشمند.',
+                        badge: 'Web3 Solana ERC-721',
+                        kloc: 16,
+                        complexity: 'high' as const,
                         index: 2
                       },
                       {
-                        title: 'Canopy Biomass Moisture Stress Radar',
+                        title: 'Canopy Biomass Dryness Tracker',
                         sub: 'مشابه Overstory 🇳🇱',
-                        desc: 'پایش مستمر سطح تنش خشکی در خاک ریشه‌ای زاگرس جهت پیشگیری مطلق قبل از اولین جرقه.',
-                        badge: 'Radar Microwave',
+                        desc: 'تحلیل داده‌های چندطیفی مادون قرمز ماهواره‌ای برای تشخیص سریع درختان مستعد آتش‌سوزی.',
+                        badge: 'Thermal Infrared ML',
+                        kloc: 13,
+                        complexity: 'nominal' as const,
                         index: 3
+                      },
+                      {
+                        title: 'Mycorrhizal Underground Fungi Network',
+                        sub: 'مشابه Fungi-Underground 🇬🇧',
+                        desc: 'پیش‌بینی بقای گونه‌های بادام دیم بر اساس پیوستگی میکروب‌های همزیست خاک جنگل.',
+                        badge: 'ML Node Graph classifier',
+                        kloc: 8,
+                        complexity: 'low' as const,
+                        index: 4
                       }
                     ].map((item) => (
-                      <div 
+                      <button
                         key={item.index}
+                        type="button"
                         onClick={() => {
                           setSelectedTrendIndex(item.index);
                           setCustomModuleName('');
                           setCustomModuleDesc('');
-                          addToast(language === 'fa' ? `ماژول ${item.title} بارگذاری شد` : `Loaded trend details for ${item.title}`, 'info');
+                          setCocomoKLOC(item.kloc);
+                          setCocomoComplexity(item.complexity === 'low' ? 'low' : item.complexity === 'high' ? 'high' : 'nominal');
+                          addToast(language === 'fa' ? `ترند استارتاپی "${item.title}" جهت تخمین مالی و تولید کدهوشمند فراخواند شد.` : `Loaded startup trend parameters for ${item.title}`, 'info');
                         }}
-                        className={`p-4 rounded-2xl border transition text-right cursor-pointer relative overflow-hidden group ${
+                        className={`p-5 rounded-2xl border text-right transition duration-300 relative overflow-hidden flex flex-col justify-between ${
                           selectedTrendIndex === item.index && customModuleName === ''
-                            ? 'bg-slate-800/80 border-indigo-500/60 shadow-lg shadow-indigo-900/10' 
-                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700/60 hover:bg-slate-900'
+                            ? 'bg-gradient-to-b from-indigo-950/60 to-slate-900/80 border-indigo-500/60 shadow-xl shadow-indigo-500/5' 
+                            : 'bg-slate-900/40 border-white/5 hover:border-slate-800 hover:bg-slate-900/60'
                         }`}
                       >
-                        <div className="flex justify-between items-start gap-2">
-                          <span className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
-                            selectedTrendIndex === item.index && customModuleName === ''
-                              ? 'bg-indigo-500/20 text-indigo-300' 
-                              : 'bg-slate-850 text-slate-400'
-                          }`}>
-                            {item.badge}
-                          </span>
-                          <span className="text-xs text-indigo-400 font-bold">{item.sub}</span>
+                        <div>
+                          <div className="flex justify-between items-center gap-1.5 mb-3">
+                            <span className="text-[8px] font-bold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded uppercase tracking-wide">
+                              {item.badge}
+                            </span>
+                            <span className="text-[9px] text-slate-500 font-mono">#{item.kloc} KLOC</span>
+                          </div>
+                          <h5 className="font-extrabold text-xs text-white leading-tight">{item.title}</h5>
+                          <p className="text-[10px] text-indigo-300/85 font-semibold mt-1 font-mono">{item.sub}</p>
+                          <p className="text-[10px] text-slate-400 mt-2 leading-relaxed font-medium">{item.desc}</p>
                         </div>
-                        <h5 className="font-extrabold text-xs text-white mt-2.5">{item.title}</h5>
-                        <p className="text-[10px] text-slate-400 mt-1.5 leading-normal">{item.desc}</p>
                         
                         {selectedTrendIndex === item.index && customModuleName === '' && (
-                          <div className="absolute left-0 bottom-0 top-0 w-1 bg-indigo-500"></div>
+                          <div className="absolute right-0 top-0 bottom-0 w-1 bg-indigo-500"></div>
                         )}
-                      </div>
+                      </button>
                     ))}
                   </div>
-                </div>
- 
-                {/* Custom Module Suggestion Drawer Input */}
-                <div className="p-5 bg-slate-900/50 rounded-2xl border border-slate-800 space-y-4">
-                  <div>
-                    <h4 className="font-bold text-xs text-white">
-                      {language === 'fa' ? '➕ ثبت و کالبدشکافی ماژول اختصاصی شما (Custom Innovation):' : 'Propose Custom Module Innovation:'}
-                    </h4>
-                    <p className="text-[10px] text-slate-400 mt-0.5">
-                      {language === 'fa' ? 'ماژول مورد نظر خود را توصیف کنید تا مدل هوش مصنوعی کدهای چرخه‌ی حیات و ارزیابی مالی آن را شبیه‌سازی کند.' : 'Describe a personalized microservice or app view to analyze software resource metrics.'}</p>
-                  </div>
- 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] text-slate-400 font-bold mb-1.5 uppercase">{language === 'fa' ? 'نام ماژول پیشنهادی:' : 'Suggested Module Title:'}</label>
-                      <input 
-                        type="text"
-                        placeholder={language === 'fa' ? 'مثال: سیستم رصد تله‌متری خاک با ماهواره' : 'e.g. Sub-soil Moisture satellite observer'}
-                        value={customModuleName}
-                        onChange={(e) => setCustomModuleName(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none text-right placeholder-slate-600"
-                        dir="rtl"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] text-slate-400 font-bold mb-1.5 uppercase">{language === 'fa' ? 'شرح عملکرد اصلی:' : 'Module Core Behavior:'}</label>
-                      <input 
-                        type="text"
-                        placeholder={language === 'fa' ? 'سیستم یکپارچه مانیتوریتگ کاتیون‌های بومی' : 'e.g. Syncing mineral chemistry datasets'}
-                        value={customModuleDesc}
-                        onChange={(e) => setCustomModuleDesc(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none text-right placeholder-slate-600"
-                        dir="rtl"
-                      />
-                    </div>
-                  </div>
- 
-                  <div className="flex items-center gap-4">
-                    <span className="text-[11px] text-slate-400 font-extrabold">{language === 'fa' ? 'سطح پیچیدگی فنی:' : 'Target Technical Complexity:'}</span>
-                    <div className="flex gap-2">
-                      {(['low', 'medium', 'high'] as const).map((level) => (
-                        <button
-                          key={level}
-                          type="button"
-                          onClick={() => setModuleComplexity(level)}
-                          className={`px-3 py-1 rounded-lg text-[10px] font-black transition ${
-                            moduleComplexity === level 
-                              ? 'bg-indigo-600 text-white shadow shadow-indigo-900/10' 
-                              : 'bg-slate-950 text-slate-400 hover:text-slate-300'
-                          }`}
-                        >
-                          {level === 'low' ? (language === 'fa' ? 'سبک (Low)' : 'Low') :
-                           level === 'medium' ? (language === 'fa' ? 'متوسط (Medium)' : 'Medium') :
-                           (language === 'fa' ? 'سنگین (High)' : 'High')}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
- 
-                {/* Analytical breakdown section (Cost and Hours formula output) */}
-                {(() => {
-                  // Resolve standard analytical properties based on state selection
-                  const isCustom = customModuleName.trim().length > 0;
-                  const targetTitle = isCustom ? customModuleName : (selectedTrendIndex === 0 ? 'Active Wildfire Forecasting (DrySpann)' : selectedTrendIndex === 1 ? 'Bio-acoustic Canopy Protector' : selectedTrendIndex === 2 ? 'Interactive Fire Containment Planner' : 'Canopy Biomass Moisture Stress Radar');
-                  const targetDetails = isCustom ? (customModuleDesc || 'ماژول سفارشی برای رفع نیازهای محلی اراضی.') : (language === 'fa' ? [
-                    'پایش لحظه‌ای و سنجش دمایی اراضی با پردازش تصاویر پیشرفته ماهواره‌های مادون قرمز موج کوتاه.',
-                    'پایش صوتی پوشش‌های جنگلی در مقابل حریق، اره برقی و تجاوز انسانی زنده.',
-                    'برنامه‌ریزی ترابری هوایی جهادی جهت اعزام ناوگان ضدحریق و کپسول‌های پاشش نیتروژن روی جنگل.',
-                    'پایش مستمر سطح تنش خشکی در خاک ریشه‌ای زاگرس جهت پیشگیری مطلق قبل از اولین جرقه.'
-                  ][selectedTrendIndex] : [
-                    'Short-wave infrared thermal anomalies detection from satellite rasters',
-                    'Deploys solar listening microphones around forests with AI acoustic classifying',
-                    'Aviation containment pathways for retardant or water release drone swarms',
-                    'Satellite RADAR indices reporting canopy dry-matter wood stress'
-                  ][selectedTrendIndex]);
- 
-                  // Complex formula setup
-                  let factor = 1.0;
-                  if (moduleComplexity === 'low') factor = 0.55;
-                  if (moduleComplexity === 'high') factor = 1.85;
- 
-                  const baseHours = isCustom ? 120 : [190, 140, 280, 160][selectedTrendIndex];
-                  const computedHours = Math.ceil(baseHours * factor);
-                  const hourlyCostTomans = 350000;
-                  const estimatedLaborCostTomans = computedHours * hourlyCostTomans;
-                  
-                  const hostingPremiumTomans = isCustom ? 2500000 : [3500000, 7500000, 4000000, 5000000][selectedTrendIndex];
-                  const finalEstimatedTomanTotal = estimatedLaborCostTomans + Math.ceil(hostingPremiumTomans * factor);
-                  const approxUSDValue = Math.ceil(finalEstimatedTomanTotal / 50000);
- 
-                  const techStackUsed = isCustom ? 'React Component, Node.js controllers, D3 analytics' : [
-                    'React, FASTApi Python, PyTorch ML models, Sentinel-2 Thermal data',
-                    'TypeScript, TensorFlow CNN, Waveform audio spectrograph, WebSockets',
-                    'React Leaflet mapping engine, Python OpenCV Photogrammetry, WebRTC links',
-                    'React MapGL, ESA Sentinel Hub radar pipelines, Redis cache pools, D3 charts'
-                  ][selectedTrendIndex];
 
-                  const activeSnippetCode = isCustom ? `// Boilerplate for custom proposed module: ${targetTitle}
-import React, { useState } from 'react';
-
-// Custom dynamic state interface for client-system interaction
-export const ${targetTitle.replace(/[^a-zA-Z0-9]/g, '')}Module = () => {
-  const [dataFlow, setDataFlow] = useState<any[]>([]);
-  const [activeTelemetry, setActiveTelemetry] = useState(true);
-
-  const triggerLiveDiagnostics = () => {
-    console.log("Processing custom developer node: ${targetDetails}");
-    // Emits modular event telemetry to local cache
-  };
-
-  return (
-    <div className="p-6 bg-slate-900 border border-indigo-500/10 rounded-3xl">
-      <h3 className="font-extrabold text-white text-sm">${targetTitle}</h3>
-      <p className="text-xs text-slate-400 mt-1">${targetDetails}</p>
-      <button 
-        onClick={triggerLiveDiagnostics}
-        className="mt-4 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs"
-      >
-        Run Test Dispatch
-      </button>
-    </div>
-  );
-};` : [
-                    `// Pachama-style Carbon Credit ledger hook for secure green verification
-import React, { useState, useEffect } from 'react';
-
-interface CarbonMetrics {
-  totalEstimatedTons: number;
-  confidenceInterval: number;
-  lastSatellitePass: string;
-}
-
-export const useCarbonLedger = (zoneId: string) => {
-  const [metrics, setMetrics] = useState<CarbonMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Dynamic query to secure GIS satellite raster models
-    const fetchRasterMetrics = async () => {
-      try {
-        setLoading(true);
-        const res = await fetch(\`/api/gis/carbon-ledger/\${zoneId}\`);
-        const data = await res.json();
-        setMetrics({
-          totalEstimatedTons: data.tons || 124.5,
-          confidenceInterval: 0.942,
-          lastSatellitePass: new Date().toISOString()
-        });
-      } catch (err) {
-        console.error("GIS fallback protocol triggered", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchRasterMetrics();
-  }, [zoneId]);
-
-  return { metrics, loading };
-};`,
-                    `// Bio-acoustic Real-time Spectrogram Audio Classifier stream 
-import { GoogleGenAI } from "@google/genai";
-
-export async function POST(req: Request) {
-  try {
-    const { audioBufferChain, deviceLocation } = await req.json();
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    
-    // Pass raw telemetry bytes to Gemini ultra audio model
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: [
-        { inlineData: { mimeType: "audio/mp3", data: audioBufferChain } },
-        "Identify chainsaw hazards or endangered bird vocalizations."
-      ]
-    });
-    
-    return Response.json({
-      alertTriggered: response.text.toLowerCase().includes("chainsaw"),
-      rawResponse: response.text,
-      timestamp: Date.now()
-    });
-  } catch (err) {
-    return Response.json({ error: "Audio processing bypass" }, { status: 500 });
-  }
-}`,
-                    `// Mission Dispatch Flight Route Generator for swarm biological seeding
-import { GeoJSON } from 'geojson';
-
-export interface FlightWaypoint {
-  lat: number;
-  lng: number;
-  altitudeMeters: number;
-  payloadReleaseCount: number;
-}
-
-export function generateSwarmsRoute(boundary: GeoJSON.Polygon, density: number): FlightWaypoint[] {
-  const coords = boundary.coordinates[0];
-  const waypoints: FlightWaypoint[] = [];
-  
-  // Calculate grid raster lines within geographic boundaries
-  for (let idx = 0; idx < coords.length; idx += 2) {
-    waypoints.push({
-      lat: coords[idx][1],
-      lng: coords[idx][0],
-      altitudeMeters: 12.5,
-      payloadReleaseCount: Math.ceil(density * Math.random())
-    });
-  }
-  return waypoints;
-}`,
-                    `// NDVI Moisture stress indices model calculator
-export function calculateCanopyNDVI(nirBand: number[], redBand: number[]): number {
-  if (nirBand.length !== redBand.length) {
-    throw new Error("Band array mismatch");
-  }
-  
-  // NDVI formula = (NIR - Red) / (NIR + Red)
-  let sumNDVI = 0;
-  for (let i = 0; i < nirBand.length; i++) {
-    const nir = nirBand[i];
-    const red = redBand[i];
-    if (nir + red !== 0) {
-      sumNDVI += (nir - red) / (nir + red);
-    }
-  }
-  
-  return sumNDVI / nirBand.length; // Average spatial stress coefficient
-}`
-                  ][selectedTrendIndex];
-
-                  const deployModuleNow = () => {
-                    const newLog: SystemLog = {
-                      id: `log-rd-${Date.now()}`,
-                      timestamp: new Date().toISOString(),
-                      level: 'success',
-                      message: `R&D deployment protocol: Module "${targetTitle}" scaffold is linked into regional telemetry databases. Calculated labor: ${computedHours} hours.`
-                    };
-                    setLogs(prev => [newLog, ...prev]);
-                    addToast(language === 'fa' ? `ماژول "${targetTitle}" به ساختار پروژه‌های تعاونی متصل و فاز مطالعاتی آن لایو گردید!` : `Module scaffold "${targetTitle}" attached to logs successfully!`, 'success');
-                  };
-
-                  return (
-                    <div className="space-y-6">
-                      
-                      {/* Cost and Hours Dashboard Display */}
-                      <div className="bg-gradient-to-br from-indigo-950/20 to-slate-900 border border-indigo-500/10 rounded-2xl p-6 space-y-4">
-                        <div className="border-b border-indigo-500/10 pb-3 flex justify-between items-center">
-                          <span className="text-xs font-mono font-bold text-indigo-400">GH-EVOLVE-ANALYTICS</span>
-                          <h4 className="font-extrabold text-sm text-slate-100">{language === 'fa' ? '🧮 ارزیابی پولی و توسعه مهندسی ماژول:' : 'Labor & Server Financial Assessment:'}</h4>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '🛠️ کل ساعات کار فنی تیمی:' : 'Target Workload:'}</span>
-                            <span className="text-sm font-mono font-black text-white">{computedHours} {language === 'fa' ? 'ساعت کاری' : 'hours'}</span>
-                          </div>
-
-                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '💰 برآورد کل سرمایه توسعه:' : 'Development Budget:'}</span>
-                            <span className="text-sm font-mono font-black text-emerald-400">{finalEstimatedTomanTotal.toLocaleString()} {language === 'fa' ? 'تومان' : 'Tomans'}</span>
-                          </div>
-
-                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '💵 معادل حدودی ارزی آزاد:' : 'Approx Currency conversion:'}</span>
-                            <span className="text-sm font-mono font-black text-slate-300">${approxUSDValue.toLocaleString()} USD</span>
-                          </div>
-
-                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800">
-                            <span className="text-[10px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '⚙️ پشته فنی پیشنهادی AI:' : 'Optimized Tech Stack:'}</span>
-                            <span className="text-[10px] text-indigo-300 font-bold leading-none block mt-1">{techStackUsed}</span>
-                          </div>
-                        </div>
-
-                        <div className="text-[10px] text-slate-400 flex flex-wrap gap-x-4 gap-y-1 pt-1.5 font-semibold">
-                          <span>• {language === 'fa' ? `واحد تخمین: تیم مهندسی امید سبز با نرخ پایه ${hourlyCostTomans.toLocaleString()} تومان بر ساعت` : `Estimated at basic Tomans hourly software rate.`}</span>
-                          <span>• {language === 'fa' ? 'شبیه‌سازی پهنای باند و منابع ابری: تضمین‌شده با لایه Edge CDN' : 'Edge cloud capabilities included.'}</span>
-                        </div>
+                  {/* AI Dynamic Recommender Trigger */}
+                  <div className="bg-gradient-to-br from-indigo-950/30 via-slate-900/40 to-slate-950 rounded-2xl border border-indigo-500/20 p-6 space-y-4">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                      <div className="space-y-1">
+                        <h4 className="font-black text-sm text-indigo-300 flex items-center gap-2">
+                          <i className="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+                          {language === 'fa' ? 'پیشنهاد آنی هوش مصنوعی مقتدر برای ترندهای لایو اقلیمی زاگرس' : 'AI Autonomous Trend Recommender'}
+                        </h4>
+                        <p className="text-[11px] text-slate-400 max-w-2xl leading-normal">
+                          {language === 'fa' 
+                            ? 'با تکیه بر مدل پردازشی جمینی، اجازه دهید الگوریتم بر اساس آخرین فناوری‌های رقبای سبز غربی، یک سیستم بومی را با برآورد فنی hours/budget برای شما مدل‌سازی کند.' 
+                            : 'Orchestrates search algorithms to scan real global ecological indices and present an optimized SaaS module specification.'}
+                        </p>
                       </div>
+                      <button
+                        type="button"
+                        disabled={aiLoading}
+                        onClick={fetchAiTrendSuggestion}
+                        className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-black text-xs rounded-xl shadow-lg hover:shadow-indigo-500/20 transition-all duration-300 flex items-center justify-center gap-2 active:scale-95 shrink-0"
+                      >
+                        {aiLoading ? (
+                          <>
+                            <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                            <span>{language === 'fa' ? 'در حال رصد رقبای محیط‌زیستی جهانی...' : 'Analysing global clean-tech radar...'}</span>
+                          </>
+                        ) : (
+                          <>
+                            <i className="fa-solid fa-face-awesome animate-spin-slow"></i>
+                            <span>{language === 'fa' ? '🤖 عیب‌یابی و دریافت پیشنهاد خودکار ماژول جدید' : '🤖 Audit & Request Live AI Innovation'}</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
 
-                      {/* Interactive boiler plate template block */}
-                      <div className="bg-slate-950 rounded-2xl border border-slate-850 overflow-hidden text-left" dir="ltr">
-                        <div className="bg-slate-900 border-b border-slate-850 px-4 py-3 flex justify-between items-center">
-                          <div className="flex gap-1.5">
-                            <div className="w-2.5 h-2.5 rounded-full bg-rose-500/80"></div>
-                            <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80"></div>
-                            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></div>
+                    {/* AI Suggested output block */}
+                    {aiGeneratedModule && (
+                      <div className="mt-4 border border-indigo-500/20 bg-slate-950/60 p-6 rounded-2xl space-y-4 animate-fade-in text-right">
+                        <div className="flex flex-wrap justify-between items-start border-b border-indigo-550/10 pb-3 gap-2">
+                          <div>
+                            <span className="text-[9px] bg-indigo-500/20 text-indigo-300 font-black px-2 py-0.5 rounded font-mono uppercase">
+                              {aiGeneratedModule.badge}
+                            </span>
+                            <span className="text-[10px] text-indigo-400 font-extrabold mr-2 font-mono">{aiGeneratedModule.sub}</span>
                           </div>
-                          <div className="text-[10px] font-mono font-bold text-slate-500 flex items-center gap-2">
-                            <span>{techStackUsed.split(',')[0]} template active</span>
+                          <h5 className="font-extrabold text-sm text-white">{aiGeneratedModule.title}</h5>
+                        </div>
+                        
+                        <p className="text-xs text-slate-300 leading-relaxed font-semibold">
+                          {aiGeneratedModule.desc}
+                        </p>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                            <span className="text-[9px] text-slate-500 block font-bold mb-1">{language === 'fa' ? '🛠️ برآورد ساعات کارهای برنامه‌نویسی:' : 'Labor Estimates:'}</span>
+                            <span className="text-xs font-mono font-black text-indigo-300">{aiGeneratedModule.hours} ساعت کاری</span>
+                          </div>
+                          <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                            <span className="text-[9px] text-slate-500 block font-bold mb-1">{language === 'fa' ? '💰 هزینه توسعه و بستر ابری:' : 'Est. Dev Costs:'}</span>
+                            <span className="text-xs font-mono font-black text-emerald-400">{(aiGeneratedModule.costTomans || 15000000).toLocaleString()} تومان</span>
+                          </div>
+                          <div className="p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                            <span className="text-[9px] text-slate-500 block font-bold mb-1">{language === 'fa' ? '⚙️ پشته تکنولوژی پیشنهادی:' : 'Suggested Tech Stack:'}</span>
+                            <span className="text-[10px] text-indigo-400 font-black leading-tight block mt-0.5 font-mono">{aiGeneratedModule.techStack}</span>
+                          </div>
+                        </div>
+
+                        {/* code preview */}
+                        <div className="bg-slate-950 rounded-xl border border-slate-800 overflow-hidden text-left" dir="ltr">
+                          <div className="bg-slate-900/80 border-b border-slate-800 px-4 py-2 flex justify-between items-center">
+                            <div className="flex gap-1">
+                              <div className="w-2 h-2 rounded-full bg-rose-500/80"></div>
+                              <div className="w-2 h-2 rounded-full bg-amber-500/80"></div>
+                              <div className="w-2 h-2 rounded-full bg-emerald-500/80"></div>
+                            </div>
                             <button 
                               type="button"
                               onClick={() => {
-                                navigator.clipboard.writeText(activeSnippetCode);
-                                addToast(language === 'fa' ? 'کد الگوی ماژول در حافظه موقت کپی شد!' : 'Code snippet copied to clipboard!', 'success');
+                                navigator.clipboard.writeText(aiGeneratedModule.codeTemplate);
+                                addToast(language === 'fa' ? 'کد نمونه‌سازی استارتاپی به کلیپ‌بورد کپی شد!' : 'Code template copied to clipboard!', 'success');
                               }}
-                              className="px-2 py-1 bg-slate-800 hover:bg-slate-700 hover:text-white transition rounded text-[9px] font-bold text-slate-400"
+                              className="px-2 py-0.5 bg-slate-800 text-[8px] font-extrabold text-slate-300 rounded hover:text-white transition"
                             >
-                              <i className="fa-solid fa-copy mr-1"></i> Copy Code
+                              Copy Code
                             </button>
+                          </div>
+                          <pre className="p-3 overflow-x-auto text-[9px] font-mono leading-relaxed text-indigo-300/90 max-h-[140px] bg-slate-950">
+                            <code>{aiGeneratedModule.codeTemplate}</code>
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section 2: Smart Development Cycle & COCOMO 2.0 Calculations */}
+                <div className="mt-12 space-y-6 relative z-10">
+                  <div className="flex items-center gap-3 border-r-4 border-emerald-500 pr-3">
+                    <h4 className="text-base font-black text-slate-100">
+                      {language === 'fa' ? 'بخش دوم: چرخه توسعه هوشمند و برآورد فنی' : 'Part 2: Smart Development Cycle & Technical Estimation'}
+                    </h4>
+                  </div>
+
+                  {(() => {
+                    // COCOMO II Interactive Math Engine
+                    // organic/nominal rates
+                    let effortMultiplier = 1.0;
+                    if (cocomoComplexity === 'low') effortMultiplier = 0.72;
+                    if (cocomoComplexity === 'high') effortMultiplier = 1.25;
+                    if (cocomoComplexity === 'very_high') effortMultiplier = 1.78;
+
+                    // Standard COCOMO II Formula: Effort = 2.94 * (KLOC ^ 1.15) * EM
+                    const computedEffortPM = 2.94 * Math.pow(cocomoKLOC, 1.10) * effortMultiplier;
+                    
+                    // Standard Duration Formula: D = 3.67 * (Effort ^ 0.28)
+                    const computedDurationMonths = 3.67 * Math.pow(computedEffortPM, 0.28);
+                    const staffNeeded = Math.max(1, Math.round(computedEffortPM / computedDurationMonths));
+                    const estimatedTotalHours = Math.ceil(computedEffortPM * 152);
+
+                    const hourlyRateTomans = 420000; // hourly dev rate in Tomans
+                    let hostingMultiplier = 1.0;
+                    if (cocomoHosting === 'PREMIUM') hostingMultiplier = 1.8;
+                    if (cocomoHosting === 'ENTERPRISE') hostingMultiplier = 3.5;
+
+                    const baseHostingTomans = 4500000;
+                    const finalLaborCostTomans = estimatedTotalHours * hourlyRateTomans;
+                    const finalHostingCostTomans = Math.ceil(baseHostingTomans * cocomoKLOC * hostingMultiplier);
+                    const grandTotalTomans = finalLaborCostTomans + finalHostingCostTomans;
+                    const equivalentUSD = Math.ceil(grandTotalTomans / 55000);
+
+                    // Dynamic Title Mapping
+                    const isCustom = customModuleName.trim().length > 0;
+                    const activeModuleName = isCustom 
+                      ? customModuleName 
+                      : [
+                          'Active SAR Subsurface Soil Radar',
+                          'Bio-acoustic Canopy Protector AI',
+                          'Digital Carbon-Bond Smart Contract',
+                          'Canopy Biomass Dryness Tracker',
+                          'Mycorrhizal Underground Fungi Network'
+                        ][selectedTrendIndex];
+
+                    const activeModuleDetails = isCustom 
+                      ? (customModuleDesc || 'ماژول بررسی و پایش اختصاصی اراضی.') 
+                      : [
+                          'رصد عمق رطوبت و یخ‌زدگی ریشه‌های نهال با سنجش امواج مایکروویو فعال رادار فضایی.',
+                          'پایش صوتی جنگل جهت تشخیص اره‌های برقی غیرمجاز و صدای حریق.',
+                          'توکنایز کردن لایو عواید کاشت صنوبر در بستر زنجیره بلوکی سولانا با قرارداد هوشمند.',
+                          'تحلیل داده‌های چندطیفی مادون قرمز ماهواره‌ای برای تشخیص سریع اراضی خشک.',
+                          'پیش‌بینی بقای گونه‌های بادام دیم بر اساس پیوستگی میکروب‌های همزیست خاک.'
+                        ][selectedTrendIndex];
+
+                    // Sub module division hours (40% backend, 35% frontend, 25% data engine)
+                    const backendHours = Math.ceil(estimatedTotalHours * 0.40);
+                    const frontendHours = Math.ceil(estimatedTotalHours * 0.35);
+                    const mlHours = Math.ceil(estimatedTotalHours * 0.25);
+
+                    const backendCost = Math.ceil(finalLaborCostTomans * 0.40);
+                    const frontendCost = Math.ceil(finalLaborCostTomans * 0.35);
+                    const mlCost = Math.ceil(finalLaborCostTomans * 0.25);
+
+                    const handleGenerateAndCopyPrompt = () => {
+                      const promptString = `## PRO DESIGN SPEC: SYSTEM EVOLUTION MODULE MOUNT
+Act as a Principal Full-stack React, TypeScript & Tailwind Architect and Climate researcher. Write a fully fleshed out, production-ready React component or Node endpoint to implement the "${activeModuleName}" module.
+
+### Core Architecture Context:
+- Target File Scope: /components/${activeModuleName.replace(/[^a-zA-Z0-9]/g, '')}.tsx
+- Estimated Effort scale: ${computedEffortPM.toFixed(2)} Person-Months (${estimatedTotalHours} raw work hours)
+- Algorithm complexity target: ${cocomoComplexity.toUpperCase()}
+- Description: ${activeModuleDetails}
+
+### Tech Stack Directives:
+- Client-side: React 18 with Vite, Tailwind CSS, Framer Motion for premium dynamic micro-transitions.
+- Data layout: Secure D3.js SVG node graph or Recharts bar series for localized telemetry visualizations.
+- State Persistence: Offline-first localStorage backup parameters with active network status checkers.
+- Stylings: Strict dark neon design, bg-slate-950/80 drop backdrop filter, glowing borders (border-indigo-500/20), touch-bounds 44px minimum bounds.
+
+### Write a high-fidelity, complete drop-in implementation code structure with real components. (Remember, NO mock comments, write complete operational loops!).`;
+                      
+                      navigator.clipboard.writeText(promptString);
+                      setCopiedEvolvePrompt(true);
+                      addToast(language === 'fa' ? 'پرامپت توسعه کلان برای هوش مصنوعی کپی شد!' : 'AI Developer prompt specification copied to clipboard!', 'success');
+                      setTimeout(() => setCopiedEvolvePrompt(false), 3000);
+                    };
+
+                    return (
+                      <div className="space-y-6">
+                        {/* Interactive Sliders Panel */}
+                        <div className="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                          {/* Slider 1: KLOC */}
+                          <div className="space-y-2">
+                            <label className="text-[11px] text-slate-400 font-extrabold block uppercase tracking-wider">
+                              {language === 'fa' ? '✏️ اندازه کد ماژول (LOC به هزار خط):' : 'Project Scale (KLOC):'}
+                            </label>
+                            <div className="flex justify-between items-center bg-slate-950 px-3 py-1.5 rounded-xl border border-slate-800">
+                              <span className="text-xs text-slate-500 font-mono">Lines of Code</span>
+                              <span className="text-xs font-mono font-bold text-indigo-400">
+                                {(cocomoKLOC * 1000).toLocaleString()} LOC ({cocomoKLOC} KLOC)
+                              </span>
+                            </div>
+                            <input 
+                              type="range"
+                              min="2"
+                              max="45"
+                              step="1"
+                              value={cocomoKLOC}
+                              onChange={(e) => {
+                                setCocomoKLOC(parseInt(e.target.value));
+                                setCustomModuleName(''); // break from static if tweaked
+                              }}
+                              className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                            />
+                            <p className="text-[9px] text-slate-500 leading-normal">
+                              {language === 'fa' ? 'تعداد کلی خطوط کدهای تخمینی برای راه‌اندازی فول‌استک.' : 'Estimated total logic lines required for the end-to-end module.'}
+                            </p>
+                          </div>
+
+                          {/* Slider 2: Complexity Multiplier */}
+                          <div className="space-y-2">
+                            <label className="text-[11px] text-slate-400 font-extrabold block uppercase tracking-wider">
+                              {language === 'fa' ? '⚙️ پیچیدگی فنی و ضریب تلاش (EM):' : 'Algorithmic Complexity Factor:'}
+                            </label>
+                            <div className="grid grid-cols-4 gap-1.5 pt-1">
+                              {[
+                                { val: 'low' as const, label: 'Low', mult: 0.72 },
+                                { val: 'nominal' as const, label: 'Nominal', mult: 1.0 },
+                                { val: 'high' as const, label: 'High', mult: 1.25 },
+                                { val: 'very_high' as const, label: 'V.High', mult: 1.78 }
+                              ].map((opt) => (
+                                <button
+                                  key={opt.val}
+                                  type="button"
+                                  onClick={() => {
+                                    setCocomoComplexity(opt.val);
+                                    setCustomModuleName('');
+                                  }}
+                                  className={`py-2 rounded-xl text-[10px] font-black transition text-center ${
+                                    cocomoComplexity === opt.val 
+                                      ? 'bg-indigo-600 text-white shadow shadow-indigo-900/10' 
+                                      : 'bg-slate-950 text-slate-400 hover:text-slate-300 border border-slate-900'
+                                  }`}
+                                >
+                                  <div>{opt.label}</div>
+                                  <div className="text-[8px] opacity-70 mt-0.5">{opt.mult}x</div>
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-[9px] text-slate-500 leading-normal mt-1.5">
+                              {language === 'fa' ? 'تاثیر ساختار داده‌ها و درجه خلاقیت کد بر فاز توسعه.' : 'Reflects data structure uniqueness, hardware targets, and math layers.'}
+                            </p>
+                          </div>
+
+                          {/* Slider 3: Hosting Tier */}
+                          <div className="space-y-2">
+                            <label className="text-[11px] text-slate-400 font-extrabold block uppercase tracking-wider">
+                              {language === 'fa' ? '☁️ بستر سرور، پهنای باند و امنیت:' : 'Hosting Tier & Cloud Sizing:'}
+                            </label>
+                            <div className="grid grid-cols-3 gap-1.5 pt-1">
+                              {(['STANDARD', 'PREMIUM', 'ENTERPRISE'] as const).map((tier) => (
+                                <button
+                                  key={tier}
+                                  type="button"
+                                  onClick={() => setCocomoHosting(tier)}
+                                  className={`py-2 rounded-xl text-[10px] font-black transition ${
+                                    cocomoHosting === tier 
+                                      ? 'bg-emerald-600 text-white shadow shadow-emerald-990/10' 
+                                      : 'bg-slate-950 text-slate-400 hover:text-slate-300 border border-slate-900'
+                                  }`}
+                                >
+                                  {tier === 'STANDARD' ? (language === 'fa' ? 'استاندارد' : 'Standard') :
+                                   tier === 'PREMIUM' ? (language === 'fa' ? 'پریمیوم' : 'Premium') :
+                                   (language === 'fa' ? 'سازمانی' : 'Enterprise')}
+                                </button>
+                              ))}
+                            </div>
+                            <p className="text-[9px] text-slate-500 leading-normal mt-1.5">
+                              {language === 'fa' ? 'تعیین‌کننده ضریب هزینه پهنای لایو و تعداد نودهای توزیع.' : 'Determines edge latency requirements and secure Docker scaling.'}
+                            </p>
                           </div>
                         </div>
 
-                        <pre className="p-4 overflow-x-auto text-[10px] font-mono leading-relaxed text-slate-300 select-all max-h-[220px] bg-slate-950">
-                          <code>{activeSnippetCode}</code>
-                        </pre>
+                        {/* COCOMO Mathematical Outputs Visual Board */}
+                        <div className="bg-gradient-to-br from-indigo-950/20 to-slate-900 border border-indigo-500/10 rounded-3xl p-6 space-y-4">
+                          <div className="border-b border-indigo-500/10 pb-3 flex justify-between items-center">
+                            <span className="text-[9px] font-mono font-extrabold text-indigo-400 tracking-widest">COCOMO II INTERACTION MONITOR</span>
+                            <h4 className="font-extrabold text-xs text-white">
+                              {language === 'fa' 
+                                ? `🧮 سناریوی تخمین محاسباتی مدل کوکومو بر روی ماژول: ${activeModuleName}`
+                                : `🧮 Calculated Resource Estimates: ${activeModuleName}`}
+                            </h4>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                              <span className="text-[9px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '👤 ضریب شاخص نفر-ماه (PM):' : 'Effort (Person-Months):'}</span>
+                              <span className="text-base font-mono font-black text-white">{computedEffortPM.toFixed(2)} PM</span>
+                              <span className="text-[8px] text-slate-500 block mt-1">1 PM = 152 work hours</span>
+                            </div>
+
+                            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                              <span className="text-[9px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '🛠️ جمع کل زمان کدنویسی پروژه:' : 'Total Development Effort:'}</span>
+                              <span className="text-base font-mono font-black text-indigo-400">{estimatedTotalHours.toLocaleString()} {language === 'fa' ? 'ساعت کاری' : 'hours'}</span>
+                              <span className="text-[8px] text-slate-500 block mt-1">{language === 'fa' ? 'ساعت کل تیمی' : 'Aggregated technical staff hours'}</span>
+                            </div>
+
+                            <div className="p-4 bg-slate-950 rounded-2xl border border-slate-800">
+                              <span className="text-[9px] text-slate-400 block font-bold mb-1">{language === 'fa' ? '📅 دوره پیاده‌سازی بهینه (ماه):' : 'Ideal Development Duration:'}</span>
+                              <span className="text-base font-mono font-black text-white">{computedDurationMonths.toFixed(1)} {language === 'fa' ? 'ماه' : 'months'}</span>
+                              <span className="text-[8px] text-slate-500 block mt-1">{language === 'fa' ? `تعداد نیروی ایده‌آل: ${staffNeeded} مهندس` : `Best-fit team size: ${staffNeeded} developers`}</span>
+                            </div>
+
+                            <div className="p-4 bg-slate-950 rounded-2xl border border-emerald-500/20 bg-emerald-500/5">
+                              <span className="text-[9px] text-emerald-400 block font-black mb-1">{language === 'fa' ? '💰 کل هزینه راه‌اندازی فرضی (تومان):' : 'Total Simulation Costs:'}</span>
+                              <span className="text-base font-mono font-black text-emerald-400">{grandTotalTomans.toLocaleString()} تومان</span>
+                              <span className="text-[9px] text-slate-400 block mt-1">~ ${equivalentUSD.toLocaleString()} USD</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Interactive Custom Proposed Module Form drawer */}
+                        <div className="p-6 bg-slate-900/60 rounded-3xl border border-white/5 space-y-4">
+                          <div>
+                            <h4 className="font-bold text-xs text-white">
+                              {language === 'fa' ? '➕ پیشنهاد و کالبدشکافی ماژول اختصاصی تازه (Custom Module Input):' : 'Propose Custom Module Design:'}
+                            </h4>
+                            <p className="text-[10px] text-slate-400 mt-1">
+                              {language === 'fa' 
+                                ? 'نام ماژول اختصاصی خود را در فیلد زیر بنویسید تا متغیرهای COCOMO 2.0 و پرامپت توسعه آن فورا آپدیت شوند.' 
+                                : 'Enter a microservice name below to dynamically rebuild the COCOMO estimation dashboard and export specialized code blueprints.'}
+                            </p>
+                          </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1.5 uppercase">{language === 'fa' ? 'نام ماژول پیشنهادی شما:' : 'Module Name:'}</label>
+                              <input 
+                                type="text"
+                                placeholder={language === 'fa' ? 'مثال: سیستم هوشمند پایش سه‌بعدی کیفیت آب زیرزمینی' : 'e.g. 3D Karstic Underground Water Quality Monitor'}
+                                value={customModuleName}
+                                onChange={(e) => {
+                                  setCustomModuleName(e.target.value);
+                                  setSelectedTrendIndex(-1); // break link to preset
+                                }}
+                                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none text-right placeholder-slate-650"
+                                dir="rtl"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-[10px] text-slate-400 font-bold mb-1.5 uppercase">{language === 'fa' ? 'توضیحات عملکرد و ویژگی‌های این بخش:' : 'Module Objectives:'}</label>
+                              <input 
+                                type="text"
+                                placeholder={language === 'fa' ? 'سیستم یکپارچه تست شیمیایی و تله‌متری یون‌های خاک منطقه' : 'e.g. Real-time measurement of geological ions and chemical parameters'}
+                                value={customModuleDesc}
+                                onChange={(e) => {
+                                  setCustomModuleDesc(e.target.value);
+                                  setSelectedTrendIndex(-1);
+                                }}
+                                className="w-full bg-slate-950 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-xs text-slate-200 focus:outline-none text-right placeholder-slate-650"
+                                dir="rtl"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Transparency report table as requested: "گزارش شفاف سیستم هوش مصنوعی برای برآورد یک ماژول جدید (مثلاً تحلیل کیفیت آب)" */}
+                        <div className="bg-slate-900/40 border border-white/5 rounded-3xl p-6 shadow-xl space-y-4">
+                          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+                            <h4 className="font-extrabold text-xs text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                              <i className="fa-solid fa-list-check text-emerald-400"></i>
+                              {language === 'fa' ? '📋 گزارش شفاف سیستم هوش مصنوعی برای تجزیه و برآورد فنی ماژول' : '📋 Transparent AI Breakdown Report per Engineering Segment'}
+                            </h4>
+                            <span className="text-[10px] text-slate-500 font-mono">Formula: Partitioned LOC ratio</span>
+                          </div>
+
+                          <div className="overflow-x-auto">
+                            <table className="w-full text-right text-xs leading-normal border-collapse">
+                              <thead>
+                                <tr className="border-b border-slate-800 text-slate-400">
+                                  <th className="pb-3 pt-1 text-slate-400 font-bold w-1/12">{language === 'fa' ? 'ردیف' : '#'}</th>
+                                  <th className="pb-3 pt-1 text-slate-400 font-bold w-4/12">{language === 'fa' ? 'بخش توسعه' : 'Development Layer'}</th>
+                                  <th className="pb-3 pt-1 text-slate-400 font-bold w-3/12">{language === 'fa' ? 'تکنولوژی مورد استفاده' : 'Tech Stack Partition'}</th>
+                                  <th className="pb-3 pt-1 text-slate-400 font-bold text-center w-2/12">{language === 'fa' ? 'زمان تخصیصی (ساعت)' : 'Allocated Hours'}</th>
+                                  <th className="pb-3 pt-1 text-slate-400 font-bold text-left w-2/12">{language === 'fa' ? 'هزینه تخمینی (تومان)' : 'Est. Cost'}</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr className="border-b border-white/5 hover:bg-white/2 transition">
+                                  <td className="py-3 font-mono text-slate-500 text-center">۱</td>
+                                  <td className="py-3 font-bold text-white flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-indigo-500 rounded-full shrink-0"></span>
+                                    <span>{language === 'fa' ? 'بک‌اند، وب‌سرویس و وب‌سوکت‌ها (RESTful API)' : 'Backend API & Web-Service Layer'}</span>
+                                  </td>
+                                  <td className="py-3 font-mono text-indigo-300">Node.js / Express / PostgreSQL</td>
+                                  <td className="py-3 text-center font-mono font-bold text-slate-200">{backendHours} ساعت</td>
+                                  <td className="py-3 text-left font-mono font-bold text-emerald-400">{backendCost.toLocaleString()} تومان</td>
+                                </tr>
+                                <tr className="border-b border-white/5 hover:bg-white/2 transition">
+                                  <td className="py-3 font-mono text-slate-500 text-center">۲</td>
+                                  <td className="py-3 font-bold text-white flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full shrink-0"></span>
+                                    <span>{language === 'fa' ? 'فرانت‌اند، نمودارها و لایه‌های نقشه (داشبورد زنده)' : 'Frontend User Dashboards & Maps'}</span>
+                                  </td>
+                                  <td className="py-3 font-mono text-indigo-300">React.js / D3.js / Tailwind</td>
+                                  <td className="py-3 text-center font-mono font-bold text-slate-200">{frontendHours} ساعت</td>
+                                  <td className="py-3 text-left font-mono font-bold text-emerald-400">{frontendCost.toLocaleString()} تومان</td>
+                                </tr>
+                                <tr className="border-b border-white/5 hover:bg-white/2 transition">
+                                  <td className="py-3 font-mono text-slate-500 text-center">۳</td>
+                                  <td className="py-3 font-bold text-white flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 bg-pink-500 rounded-full shrink-0"></span>
+                                    <span>{language === 'fa' ? 'هوش مصنوعی، استنتاج لایو و پردازشگر تصاویر ماهواره' : 'AI Machine Learning Analysis Engine'}</span>
+                                  </td>
+                                  <td className="py-3 font-mono text-indigo-300">Python / PyTorch / Gemini SDK</td>
+                                  <td className="py-3 text-center font-mono font-bold text-slate-200">{mlHours} ساعت</td>
+                                  <td className="py-3 text-left font-mono font-bold text-emerald-400">{mlCost.toLocaleString()} تومان</td>
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {/* Large Action Panel: "دستیار برنامه‌نویس هوشمند" - Copy Prompt */}
+                        <div className="bg-gradient-to-r from-indigo-950/60 to-slate-900 rounded-3xl border border-indigo-500/20 p-6 md:p-8 space-y-4">
+                          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-black text-rose-400 uppercase tracking-wider bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+                                {language === 'fa' ? 'دستیار هوشمند برنامه‌نویس (AI PAIR-PROGRAMMER)' : 'AI PAIR-PROGRAMMER DIRECTIVE'}
+                              </span>
+                              <h4 className="text-sm font-black text-white pt-2">
+                                {language === 'fa' ? '🤖 تولید خودکار کدهای زیرساخت و دریافت پرامپت توسعه کلان برای LLM' : '🤖 Generate High-Fidelity LLM Developer Prompt'}
+                              </h4>
+                              <p className="text-[11px] text-slate-400 leading-normal max-w-xl">
+                                {language === 'fa' 
+                                  ? 'پرامپت مهندسی شده زیر را کپی کرده و به هوش مصنوعی تحویل دهید تا کدهای نهایی این افزونه را مطابق برآوردهای سناریو بنویسد.' 
+                                  : 'Copies a hyper-detailed architectural coding prompt loaded with selected COCOMO hours and file paths.'}
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={handleGenerateAndCopyPrompt}
+                              className={`px-6 py-3.5 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition active:scale-95 shrink-0 shadow-lg ${
+                                copiedEvolvePrompt 
+                                  ? 'bg-emerald-900 border border-emerald-500 text-emerald-300' 
+                                  : 'bg-indigo-600 hover:bg-indigo-550 text-white shadow-indigo-600/25'
+                              }`}
+                            >
+                              {copiedEvolvePrompt ? (
+                                <>
+                                  <i className="fa-solid fa-check text-emerald-400"></i>
+                                  <span>{language === 'fa' ? 'کپی حیات کد انجام شد!' : 'Prompt Copied!'}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <i className="fa-solid fa-copy"></i>
+                                  <span>{language === 'fa' ? 'کپی پرامپت ارتقاء و کدتولید مگا' : 'Copy Megaprompt Spec'}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+
+                          <div className="bg-slate-950/80 p-5 rounded-2xl border border-slate-800 text-left" dir="ltr">
+                            <pre className="font-mono text-[9px] text-indigo-300/80 leading-relaxed whitespace-pre-wrap select-all max-h-[140px] overflow-y-auto">
+                              <code>
+{`## PRO DESIGN SPEC: SYSTEM EVOLUTION MODULE MOUNT
+Act as a Principal Full-stack React, TypeScript & Tailwind Architect. Write a fully fleshed out, production-ready React component or Node endpoint to implement the "${activeModuleName}" module.
+
+### Core Architecture Context:
+- Target File Scope: /components/${activeModuleName.replace(/[^a-zA-Z0-9]/g, '')}.tsx
+- Estimated Effort scale: ${computedEffortPM.toFixed(2)} PM (${estimatedTotalHours} raw work hours)
+- Algorithm complexity target: ${cocomoComplexity.toUpperCase()}
+- Description: ${activeModuleDetails}
+
+### Tech Stack Directives:
+- Client-side: React 18 with Vite, Tailwind CSS, Framer Motion transitions.
+- State Persistence: Offline-first localStorage backup parameters with active network status checkers.`}
+                              </code>
+                            </pre>
+                          </div>
+                        </div>
+
+                        {/* Action buttons (Attach to logs and mock deploy) */}
+                        <div className="flex flex-col sm:flex-row gap-3 pt-4 justify-end">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newLog: SystemLog = {
+                                id: `log-scaffold-${Date.now()}`,
+                                timestamp: new Date().toISOString(),
+                                level: 'info',
+                                message: `🤖 Automated R&D Scaffold programmed for "${activeModuleName}". KLOC size: ${cocomoKLOC}, Staff allocated: ${staffNeeded} engineers.`
+                              };
+                              setLogs(prev => [newLog, ...prev]);
+                              addToast(language === 'fa' ? `کدهای آغازین ماژول ${activeModuleName} به درخت کدهای لوکال همگام‌سازی شد!` : `Boilerplate for ${activeModuleName} linked!`, 'success');
+                            }}
+                            className="px-5 py-3 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 active:scale-95"
+                          >
+                            <i className="fa-solid fa-code text-indigo-400"></i>
+                            <span>{language === 'fa' ? '🤖 تولید بویلرپلیت و تزریق به کش محلی' : '🤖 AI Program Starter Boilerplate'}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newLog: SystemLog = {
+                                id: `log-deploy-${Date.now()}`,
+                                timestamp: new Date().toISOString(),
+                                level: 'success',
+                                message: `🚀 Deployed Live System segment: "${activeModuleName}". Total simulated budget: ${grandTotalTomans.toLocaleString()} Tomans.`
+                              };
+                              setLogs(prev => [newLog, ...prev]);
+                              addToast(language === 'fa' ? `ماژول پیاده‌سازی شده "${activeModuleName}" در شبیه‌ساز کوبرنتیز به چرخه حیات متصل شد!` : `Simulated deployment for ${activeModuleName} completed!`, 'success');
+                            }}
+                            className="px-5 py-3 bg-emerald-600 hover:bg-emerald-555 text-white font-bold text-xs rounded-xl shadow-lg hover:shadow-emerald-500/10 transition flex items-center justify-center gap-1.5 active:scale-95"
+                          >
+                            <i className="fa-solid fa-rocket animate-bounce"></i>
+                            <span>{language === 'fa' ? '🚀 پیوند ماژول به درخت لاگ‌ها و شبیه‌سازی استقرار' : '🚀 Mount Module to Local System Session'}</span>
+                          </button>
+                        </div>
                       </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            </div>
+          )}
 
-                      {/* Action buttons (Attach to logs and scaffold) */}
-                      <div className="flex flex-col sm:flex-row gap-3 pt-2 justify-end" dir="rtl">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Run dynamic simulated logic
-                            const fakeCode = `// Autogenerated ${targetTitle} module scaffold. Completed and deployed internally.`;
-                            const stateLog: SystemLog = {
-                              id: `log-seed-${Date.now()}`,
-                              timestamp: new Date().toISOString(),
-                              level: 'info',
-                              message: `Dev Sandbox: Auto-programmed software pipeline generated successfully for "${targetTitle}".`
-                            };
-                            setLogs(prev => [stateLog, ...prev]);
-                            addToast(language === 'fa' ? `تولید کدهای تکمیلی ماژول پیشرو ${targetTitle} با موفقیت انجام شد!` : 'Scaffold pipeline completed!', 'success');
-                          }}
-                          className="px-4 py-2 bg-indigo-650 hover:bg-indigo-600 border border-indigo-500/20 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 active:scale-95"
-                        >
-                          <i className="fa-solid fa-code text-indigo-300"></i>
-                          <span>{language === 'fa' ? '🤖 تولید خودکار و ذخیره‌سازی کدهای ماژول' : '🤖 AI Program Starter Boilerplate'}</span>
-                        </button>
+          {/* Open-Source Heritage & AI Tributes Tab Stage */}
+          {activeTab === 'opensource' && (
+            <div className="space-y-6 animate-fade-in text-right" dir={language === 'fa' ? 'rtl' : 'ltr'}>
+              <div className="bg-slate-950/60 rounded-[2.5rem] border border-white/5 p-8 md:p-12 shadow-2xl overflow-hidden backdrop-blur-md relative">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-[120px] pointer-events-none"></div>
+                <div className="absolute bottom-0 left-0 w-96 h-96 bg-rose-500/5 rounded-full blur-[120px] pointer-events-none"></div>
 
-                        <button
-                          type="button"
-                          onClick={deployModuleNow}
-                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center justify-center gap-1.5 active:scale-95"
-                        >
-                          <i className="fa-solid fa-rocket"></i>
-                          <span>{language === 'fa' ? '🚀 پیوند ماژول به درخت لاگ‌ها و شبیه‌سازی استقرار' : '🚀 Mount Module to Local System Session'}</span>
-                        </button>
+                {/* Banner Header */}
+                <div className="border-b border-white/5 pb-6 mb-8 relative z-10">
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-3 justify-end lg:justify-start">
+                        <span className="text-[10px] bg-amber-500/20 text-amber-300 font-extrabold px-3 py-1 rounded-full uppercase tracking-widest border border-amber-500/30">
+                          {language === 'fa' ? 'میراث نرم‌افزار و همیاری هوشمند' : 'Software Heritage & Intelligent Synergy'}
+                        </span>
+                        <span className="text-[10px] bg-emerald-500/10 text-emerald-400 font-bold px-3 py-1 rounded-full border border-emerald-500/20">
+                          {language === 'fa' ? 'اعتبار کدهای متن‌باز' : 'Verified Open-Source Attribution'}
+                        </span>
                       </div>
-
+                      <h3 className="text-2xl md:text-3xl font-black text-white tracking-tight leading-tight">
+                        {language === 'fa' ? 'میراث پروژه‌های متن‌باز و تقدیرنامه هوش مصنوعی' : 'Open-Source Heritage & AI Agent Collaboration Tribute'}
+                      </h3>
+                      <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+                        {language === 'fa' 
+                          ? 'پلتفرم امید سبز بر شانه غول‌های دنیای متن‌باز بنا شده و با هوش و خلاقیت سیستم‌های نوین هوش مصنوعی به بار نشسته است.' 
+                          : 'The Green Hope platform is constructed on top of pristine open-source architectures, powered by the collective intelligence of modern AI systems.'}
+                      </p>
                     </div>
-                  );
-                })()}
+                    <div className="flex items-center gap-2.5 font-mono text-xs bg-amber-500/10 border border-amber-500/20 text-amber-300 px-4 py-2 rounded-2xl shrink-0 shadow-lg self-start lg:self-center">
+                      <i className="fa-solid fa-heart animate-pulse text-rose-500"></i>
+                      <span className="font-bold">{language === 'fa' ? 'بخش سپاس مانا' : 'With Pure Gratitude'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 1: Open Source Integration & Heritage */}
+                <div className="space-y-6 relative z-10">
+                  <div className="flex items-center gap-3 border-r-4 border-amber-500 pr-3">
+                    <h4 className="text-lg font-black text-slate-100">
+                      {language === 'fa' ? '۱. پروژه‌های متن‌باز مرجع و تأثیرگذار در توسعه' : '1. Open-Source Influences & Inherited Architectures'}
+                    </h4>
+                  </div>
+
+                  <p className="text-xs text-slate-305 leading-relaxed font-medium">
+                    {language === 'fa'
+                      ? 'ما صمیمانه از جامعه توسعه‌دهندگان مستقل و پروژه‌های پیشروی زیر که کدهای بستر و الگوهای ساختاریافته آن‌ها الهام‌بخش لایه ثبت اسناد رسمی و قرارداد لایو حق امتیاز گیاهان بوده است، قدردانی می‌کنیم:'
+                      : 'We express our deepest admiration to the independent developer community and the following pioneering repositories whose structured documents, template architectures, and intellectual assets helped finalize our contract layers:'}
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    {/* Repository 1 Card */}
+                    <div className="bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-amber-500/20 p-6 rounded-3xl transition duration-300 flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] bg-slate-950 text-slate-400 font-mono px-2 py-0.5 rounded border border-white/5">
+                            HappyThis / patent_creator
+                          </span>
+                          <i className="fa-brands fa-github text-xl text-slate-400"></i>
+                        </div>
+                        <h5 className="font-extrabold text-sm text-slate-100">
+                          {language === 'fa' ? '💻 قالب نوآوری و ثبت فلو Patent Creator' : '💻 Patent Creator Framework'}
+                        </h5>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {language === 'fa'
+                            ? 'این پروژه متن‌باز منبعی فوق‌العاده از ایده‌ها پیرامون مکانیزم‌های خلاق ثبت ایده و فلوهای تعاملی جذاب مهیا ساخته است. ما از ساختار قالب زیبا، تم پردازشی پیشرفته و المان‌های رابط کاربری صمیمی و منحصربه‌فرد آن بهره فراوان بردیم و تشکر عمیق خود را ابراز می‌کنیم.'
+                            : 'This repository provides outstanding design layouts around creative patent registry procedures and highly interactive wizard controls. We offer our special thanks for the gorgeous, polished templates and theme blueprints inherited to streamline our system.'}
+                        </p>
+                      </div>
+                      <div className="pt-4 mt-4 border-t border-white/5 flex justify-end">
+                        <a 
+                          href="https://github.com/HappyThis/patent_creator" 
+                          target="_blank" 
+                          referrerPolicy="no-referrer"
+                          rel="noopener noreferrer"
+                          className="text-xs text-amber-500 font-bold hover:underline inline-flex items-center gap-1.5"
+                        >
+                          {language === 'fa' ? 'مشاهده کدهای مادر در گیت‌هاب ↗' : 'View Source on GitHub ↗'}
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Repository 2 Card */}
+                    <div className="bg-slate-900/50 hover:bg-slate-900 border border-white/5 hover:border-amber-500/20 p-6 rounded-3xl transition duration-300 flex flex-col justify-between">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] bg-slate-950 text-slate-400 font-mono px-2 py-0.5 rounded border border-white/5">
+                            yorkeccak / patents
+                          </span>
+                          <i className="fa-brands fa-github text-xl text-slate-400"></i>
+                        </div>
+                        <h5 className="font-extrabold text-sm text-slate-100">
+                          {language === 'fa' ? '🗄️ ابزار ساختاریافته استعلام Patents' : '🗄️ Patents Validation Engine'}
+                        </h5>
+                        <p className="text-xs text-slate-400 leading-relaxed">
+                          {language === 'fa'
+                            ? 'بستری ساختاریافته در تحلیل پرونده‌های ثبت اختراع و تایید گواهی رسمی که ایده‌های گران‌بهایی برای طراحی لایه‌های توافقنامه سازمانی، اسناد مالی و مدل‌های پایش سرمایه‌گذاری سبز به ما بخشیده است.'
+                            : 'Providing an excellent implementation format to organize certifications and validate enterprise contracts, giving us invaluable insights to design our formal biocredit agreements.'}
+                        </p>
+                      </div>
+                      <div className="pt-4 mt-4 border-t border-white/5 flex justify-end">
+                        <a 
+                          href="https://github.com/yorkeccak/patents" 
+                          target="_blank" 
+                          referrerPolicy="no-referrer"
+                          rel="noopener noreferrer"
+                          className="text-xs text-amber-500 font-bold hover:underline inline-flex items-center gap-1.5"
+                        >
+                          {language === 'fa' ? 'مشاهده کدهای مادر در گیت‌هاب ↗' : 'View Source on GitHub ↗'}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Special Collaboration Tribute to AI Agents */}
+                <div className="mt-12 space-y-6 relative z-10">
+                  <div className="flex items-center gap-3 border-r-4 border-rose-500 pr-3">
+                    <h4 className="text-lg font-black text-slate-100">
+                      {language === 'fa' ? '۲. تقدیرنامه ویژه هوش مصنوعی (AI Collaboration tribute)' : '2. Special Tribute & Gratitude to AI Collaborations'}
+                    </h4>
+                  </div>
+
+                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                    {language === 'fa'
+                      ? 'امکان مهندسی، عیب‌یابی و تدوین سیستم‌های پیچیده با این سطح از دقت، بدون همراهی خستگی‌ناپذیر برترین مدل‌های هوش مصنوعی ناممکن بود. ما زحمات نمایندگان زیر را بیادگار گرامی می‌داریم:'
+                      : 'Developing, compiling, and debugging such an extensive, full-stack microclimate simulation application would be impossible without the dynamic oversight of today’s leading AI models. We happily dedicate the following credits:'}
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-2">
+                    {/* Gemini Card */}
+                    <div className="bg-slate-900/40 p-5 rounded-2xl border border-rose-500/10 space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center">
+                        <i className="fa-solid fa-wand-magic-sparkles"></i>
+                      </div>
+                      <h5 className="font-extrabold text-sm text-slate-100">Gemini (Google)</h5>
+                      <p className="text-[11px] text-slate-400 leading-normal">
+                        {language === 'fa'
+                          ? 'موتور محرک تحلیل‌های هوشمند تصاویر هوایی و لایو کدهای این اپلیت، که با پایبندی کامل به استانداردهای تایپ‌اسکریپت، امکان رندر نمودارهای ری‌چارتس و فریم‌ورک‌های ژئورفرنس را پدید آورد.'
+                          : 'The core cognitive backbone compiling error-free TypeScript, structuring our beautiful Recharts area panels, and anchoring the responsive multi-layered satellite modules.'}
+                      </p>
+                    </div>
+
+                    {/* Grok Card */}
+                    <div className="bg-slate-900/40 p-5 rounded-2xl border border-indigo-500/10 space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                        <i className="fa-solid fa-brain"></i>
+                      </div>
+                      <h5 className="font-extrabold text-sm text-slate-100">Grok (xAI)</h5>
+                      <p className="text-[11px] text-slate-400 leading-normal">
+                        {language === 'fa'
+                          ? 'نوآور برجسته در فرموله‌سازی محاسبات ریاضی شبیه‌ساز اقتصادی COCOMO 2.0، و ارائه ایده‌های پیشرو برای انتقال برنامه به یک موجود زنده.'
+                          : 'Our expert companion for modeling advanced financial simulations, COCOMO II effort benchmarking, and creative clean-tech startup suggestions.'}
+                      </p>
+                    </div>
+
+                    {/* DeepSeek Card */}
+                    <div className="bg-slate-900/40 p-5 rounded-2xl border border-teal-500/10 space-y-3">
+                      <div className="w-10 h-10 rounded-xl bg-teal-500/10 border border-teal-500/20 text-teal-400 flex items-center justify-center">
+                        <i className="fa-solid fa-magnifying-glass-chart"></i>
+                      </div>
+                      <h5 className="font-extrabold text-sm text-slate-100">DeepSeek</h5>
+                      <p className="text-[11px] text-slate-400 leading-normal">
+                        {language === 'fa'
+                          ? 'فرمانده بهینه‌سازی کدهای فرانت‌اند و تحلیل امنیت داده‌های کش، و ساختارسازی تله‌متری با کارآمدی حداکثری ابزارهای مهندسی.'
+                          : 'An exceptional engine for code optimizations, database integrity validation under sandboxed storage, and robust telemetry algorithms.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-6 bg-slate-900/30 border border-white/5 rounded-3xl text-center space-y-2 mt-4">
+                    <span className="text-xs font-semibold text-slate-350 block">
+                      {language === 'fa'
+                        ? '🤝 خسته نباشید و تشکر صمیمانه از جامعه توسعه‌دهندگان، مدل‌های هوشمند همکار و حامیان پایداری اراضی زمین.'
+                        : '🤝 A heartfelt salute of appreciation to the global software stewards, dynamic AI models, and climate sustainability advocates worldwide.'}
+                    </span>
+                    <p className="text-[10px] text-slate-500 font-mono">
+                      Compiled & Verified via AI Studio Orchestrator • Live System Active
+                    </p>
+                  </div>
+                </div>
 
               </div>
             </div>

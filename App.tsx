@@ -1,8 +1,11 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import PatentDraftingPage from './components/PatentDraftingPage';
 import SiteHeader from './components/Header';
 import GreenHopePage from './components/HomePage';
 import AdminPanel from './components/AdminPanel';
 import QuotaErrorModal from './components/QuotaErrorModal';
+import ScrollToTop from './components/ScrollToTop';
 import { useLanguage, PlantingSuggestion, VegetationAnalysis, RiskAnalysis, CrowdfundingCampaign, WeatherData, FullAnalysis } from './types';
 import { useToast } from './components/Toast';
 import { getFullAnalysis, generateCrowdfundingCampaign, getWeatherData } from './services/geminiService';
@@ -12,10 +15,10 @@ import SiteFooter from './components/Footer';
 type LoadingState = 'full-analysis' | 'campaign' | 'areas' | 'weather' | 'reforestation-need' | false;
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<'app' | 'admin'>('app');
   const [isQuotaExhausted, setIsQuotaExhausted] = useState(false);
   const { addToast } = useToast();
   const { language, t } = useLanguage();
+  const location = useLocation();
 
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number, lng: number } | null>({ lat: 36.175683, lng: 58.465929 });
   const [fullAnalysis, setFullAnalysis] = useState<FullAnalysis | null>(null);
@@ -28,7 +31,7 @@ const App: React.FC = () => {
   const [analyzeOnLocationSelect, setAnalyzeOnLocationSelect] = useState(false);
   const [useGrounding, setUseGrounding] = useState(true);
   
-
+  
   const handleApiError = useCallback((error: unknown) => {
     let message = t('error');
     if (error instanceof Error) {
@@ -148,37 +151,40 @@ const App: React.FC = () => {
 
   return (
       <div className="text-white font-sans">
+        <ScrollToTop />
         <SiteHeader 
           onLogoClick={resetState} 
-          currentView={currentView} 
-          onAdminClick={(isAdmin) => setCurrentView(isAdmin ? 'admin' : 'app')} 
+          currentView={location.pathname === '/admin' ? 'admin' : 'app'} 
+          onAdminClick={() => {}} 
         />
         <main>
-          {currentView === 'admin' ? (
-            <AdminPanel onBackToApp={() => setCurrentView('app')} />
-          ) : (
-            <GreenHopePage
-                onLocationSelect={handleLocationSelect}
-                selectedLocation={selectedLocation}
-                onFullAnalysis={handleFullAnalysis}
-                onGenerateCampaign={handleGenerateCampaign}
-                onFetchWeather={handleFetchWeather}
-                plantingSuggestion={plantingSuggestionWithSources}
-                vegetationAnalysis={vegetationAnalysisWithSources}
-                riskAnalysis={riskAnalysisWithSources}
-                crowdfundingCampaign={crowdfundingCampaign}
-                weatherData={weatherData}
-                isLoading={isLoading}
-                setIsLoading={setIsLoading}
-                error={error}
-                numberOfTrees={numberOfTrees}
-                onNumberOfTreesChange={setNumberOfTrees}
-                reforestationGoal={reforestationGoal}
-                onReforestationGoalChange={setReforestationGoal}
-                useGrounding={useGrounding}
-                onUseGroundingChange={setUseGrounding}
-            />
-          )}
+          <Routes>
+             <Route path="/" element={
+                 <GreenHopePage
+                  onLocationSelect={handleLocationSelect}
+                  selectedLocation={selectedLocation}
+                  onFullAnalysis={handleFullAnalysis}
+                  onGenerateCampaign={handleGenerateCampaign}
+                  onFetchWeather={handleFetchWeather}
+                  plantingSuggestion={plantingSuggestionWithSources}
+                  vegetationAnalysis={vegetationAnalysisWithSources}
+                  riskAnalysis={riskAnalysisWithSources}
+                  crowdfundingCampaign={crowdfundingCampaign}
+                  weatherData={weatherData}
+                  isLoading={isLoading}
+                  setIsLoading={setIsLoading}
+                  error={error}
+                  numberOfTrees={numberOfTrees}
+                  onNumberOfTreesChange={setNumberOfTrees}
+                  reforestationGoal={reforestationGoal}
+                  onReforestationGoalChange={setReforestationGoal}
+                  useGrounding={useGrounding}
+                  onUseGroundingChange={setUseGrounding}
+              />
+            } />
+            <Route path="/patent" element={<PatentDraftingPage />} />
+            <Route path="/admin" element={<AdminPanel onBackToApp={() => {}} />} />
+          </Routes>
         </main>
         <SiteFooter />
         <QuotaErrorModal isOpen={isQuotaExhausted} onClose={() => setIsQuotaExhausted(false)} />

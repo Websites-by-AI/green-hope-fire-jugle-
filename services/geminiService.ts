@@ -1,8 +1,13 @@
-import { FullAnalysis, CrowdfundingCampaign, WeatherData, PlantingSuggestion, HomePlant, Grant, Source, UndergroundWaterAnalysis, EnvironmentalAudit } from '../types';
+import { FullAnalysis, CrowdfundingCampaign, WeatherData, PlantingSuggestion, HomePlant, Grant, Source, UndergroundWaterAnalysis, EnvironmentalAudit, GrantProposal } from '../types';
 import { canMakeApiCall, recordApiCall } from './rateLimiter';
+import { addSystemLog } from './adminService';
 
 // Use secure local proxy rather than direct external API calls
-const generateLocalMockDataClient = (promptStr: string): any => {
+const generateLocalMockDataClient = (promptStr: string, errorContext?: string): any => {
+    // Log fallback invocation to admin system logs
+    addSystemLog('warning', `Invoking local mock data generator. Reason: ${errorContext || 'General Fallback'}`);
+    
+    // ... existing implementation remains mostly the same, just keeping the top part for import context
     const isPersian = promptStr.includes("Persian") || promptStr.includes("fa") || promptStr.includes("fa-IR") || promptStr.includes("زاگرس") || promptStr.includes("بنه");
     const isArabic = promptStr.includes("ar") || promptStr.includes("عربي") || promptStr.includes("الموقع");
 
@@ -204,25 +209,101 @@ const generateLocalMockDataClient = (promptStr: string): any => {
       if (isPersian) {
         return {
           grants: [
-            { name: "برنامه کمک‌های خرد تسهیلات محیط زیست جهانی (GEF SGP)", description: "حمایت مالی از پروژه‌های جامعه‌محور برای مبارزه با بیابان‌زایی و احیای تنوع زیستی در منطقه زاگرس.", deadline: "۱۵ دسامبر ۲۰۲۵", link: "https://sgp.undp.org" },
-            { name: "صندوق سازگاری با تغییرات اقلیمی (Adaptation Fund)", description: "تأمین بودجه برای زیرساخت‌های مقاوم در برابر خشکسالی و سیستم‌های هشدار زودهنگام حریق.", deadline: "۳۰ مارس ۲۰۲۶", link: "https://www.adaptation-fund.org" },
-            { name: "گرنت‌های بنیاد میراث زاگرس", description: "تمرکز بر پایش پهپادی و ایجاد نهالستان‌های بومی برای بلوط و بنه.", deadline: "۳۰ مهر ۱۴۰۴", link: "https://zagros.ir/grants" }
+            { 
+              name: "برنامه کمک‌های خرد تسهیلات محیط زیست جهانی (GEF SGP)", 
+              description: "حمایت مالی از پروژه‌های جامعه‌محور برای مبارزه با فرسایش و احیای دامنه‌های دیمی با احداث جنگل دیمه ملل متحد.", 
+              deadline: "۱۵ دسامبر ۲۰۲۵", 
+              link: "https://sgp.undp.org",
+              matchPercentage: 94,
+              fundingAmount: "۵۰,۰۰۰ دلار (باکس بلاعوض)",
+              applicableRegions: "ایران و منطقه زاگرس (خاورمیانه)",
+              timeLimitStatus: "medium"
+            },
+            { 
+              name: "صندوق سازگاری رسمی اقلیمی (Adaptation Fund)", 
+              description: "تأمین بودجه سیستم‌های آبخیزداری دیمه، مالچ درختی و سدهای آبخیز محلی سازگار با تنش شدید گرما.", 
+              deadline: "۳۰ مارس ۲۰۲۶", 
+              link: "https://www.adaptation-fund.org",
+              matchPercentage: 88,
+              fundingAmount: "۲۵۰,۰۰۰ دلار",
+              applicableRegions: "کشورهای در حال توسعه خاورمیانه",
+              timeLimitStatus: "extended"
+            },
+            { 
+              name: "صندوق تخصصی توسعه بومی دیمه زاگرس", 
+              description: "طرح اضطراری ملی حمایت از باغات دیم و کاشت حمایتی درختان بادام کوهی و بنه بومی فلات غرب آسیا.", 
+              deadline: "۳۰ روز آینده (فوری)", 
+              link: "https://zagros.ir/grants",
+              matchPercentage: 97,
+              fundingAmount: "۱.۵ میلیارد تومان (بلاعوض و کم‌بهره)",
+              applicableRegions: "استان‌های حوزه زاگرس ایران",
+              timeLimitStatus: "immediate"
+            },
+            { 
+              name: "جایزه جهانی رهبری سبز ژاپن (JICA Green Grant)", 
+              description: "اعطای سرمایه برای استقرار ایستگاه‌های پایش رطوبت خاک و دکل‌های خودکار پایش و اطفای حریق پیشرفته.", 
+              deadline: "چرخشی سالانه (مستمر)", 
+              link: "https://www.jica.go.jp",
+              matchPercentage: 72,
+              fundingAmount: "۱۰۰,۰۰۰ دلار حمایتی",
+              applicableRegions: "بین‌المللی و کشورهای عضو آسیایی",
+              timeLimitStatus: "recurring"
+            }
           ],
           sources: [
             { uri: "https://sgp.undp.org", title: "صندوق برنامه عمران ملل متحد (UNDP SGP)" },
-            { uri: "https://www.adaptation-fund.org", title: "صندوق سازگاری رسمی ملل متحد" }
+            { uri: "https://www.adaptation-fund.org", title: "صندوق سازگاری رسمی ملل متحد" },
+            { uri: "https://zagros.ir", title: "دبیرخانه ملی گرنت‌های زاگرس" }
           ]
         };
       } else {
         return {
           grants: [
-            { name: "GEF Small Grants Programme (SGP) - Reforestation Track", description: "Direct funding for community-led biodiversity restoration and sustainable land management in arid ecosystems.", deadline: "December 15, 2025", link: "https://sgp.undp.org" },
-            { name: "IUCN Arid Lands Restoration Fund", description: "Specifically targets projects building native seed banks and high-survival sapling nurseries in the Middle East.", deadline: "October 30, 2026", link: "https://www.iucn.org/grants" },
-            { name: "Green Climate Fund (GCF) Community Readiness Window", description: "Grants for implementing local early-warning systems for forest fires and extreme drought responses.", deadline: "Rolling deadline 2025", link: "https://www.greenclimate.fund" }
+            { 
+              name: "GEF Small Grants Programme (SGP) - Reforestation Track", 
+              description: "Direct funding for community-led biodiversity restoration and sustainable dryland agricultural management in arid ecosystems.", 
+              deadline: "December 15, 2025", 
+              link: "https://sgp.undp.org",
+              matchPercentage: 92,
+              fundingAmount: "Up to $50,000 USD",
+              applicableRegions: "Global Developing Nations",
+              timeLimitStatus: "medium"
+            },
+            { 
+              name: "IUCN Arid Lands Restoration Initiative", 
+              description: "Specifically targets projects building native seed banks and high-survival sapling nurseries for dryland almond (Deymeh) in West-Asia.", 
+              deadline: "October 30, 2026", 
+              link: "https://www.iucn.org/grants",
+              matchPercentage: 96,
+              fundingAmount: "$120,000 USD",
+              applicableRegions: "Middle East / Arid Zones",
+              timeLimitStatus: "extended"
+            },
+            { 
+              name: "Green Climate Fund (GCF) Community Readiness Window", 
+              description: "Grants for implementing local early-warning systems for forest fires and extreme mountain forest drought response.", 
+              deadline: "Immediate Call (30 Days)", 
+              link: "https://www.greenclimate.fund",
+              matchPercentage: 79,
+              fundingAmount: "Up to $300,000 USD",
+              applicableRegions: "Global Member Nations",
+              timeLimitStatus: "immediate"
+            },
+            { 
+              name: "Global EbA Fund (Ecosystem-based Adaptation)", 
+              description: "Support for catalytic environmental interventions utilizing native agricultural and wild agroforest systems.", 
+              deadline: "Rolling / Continuous", 
+              link: "https://globalebafund.org",
+              matchPercentage: 84,
+              fundingAmount: "$250,000 USD",
+              applicableRegions: "International Non-Annex Counties",
+              timeLimitStatus: "recurring"
+            }
           ],
           sources: [
             { uri: "https://sgp.undp.org", title: "UNDP SGP Global Portal" },
-            { uri: "https://www.greenclimate.fund", title: "Green Climate Fund Official" }
+            { uri: "https://www.greenclimate.fund", title: "Green Climate Fund Official" },
+            { uri: "https://globalebafund.org", title: "Global EbA Fund Platform" }
           ]
         };
       }
@@ -272,6 +353,33 @@ const generateLocalMockDataClient = (promptStr: string): any => {
             estimatedOperationalCost: "$12,000 USD",
             infrastructureNeeds: ["Satellite-linked sensor arrays", "Tactical water retention basins", "Rapid response UAV fleet"]
           }
+        };
+      }
+    }
+    else if (promptStr.includes("proposal") || promptStr.includes("grant application")) {
+      if (isPersian) {
+        return {
+          title: "طرح جامع احیای بوم‌شناختی اراضی زاگرس با رویکرد توانمندسازی جوامع محلی",
+          executiveSummary: "این پروپوزال با اولویت مقابله با خشکسالی و حریق تنظیم شده است.",
+          projectGoals: ["تثبیت بیولوژیکی اراضی", "کاهش ریسک حریق", "اشتغال سبز"],
+          technicalApproach: "استقرار سنسورهای IoT و کاشت گونه‌های بومی.",
+          teamStructure: [{ role: "مدیر", qualifications: "دکترای محیط زیست" }],
+          budgetBreakdown: [{ category: "اجرا", amount: "$50,000", justification: "هزینه نهال و ابزار" }],
+          timeline: [{ phase: "کاشت", duration: "۶ ماه", activities: ["غرس نهال"] }],
+          expectedOutcomes: ["کنترل فرسایش"],
+          sustainabilityPlan: "مشارکت تعاونی‌های محلی."
+        };
+      } else {
+        return {
+          title: "Integrated Ecological Restoration of Zagros Highlands",
+          executiveSummary: "A comprehensive project for Zagros range restoration.",
+          projectGoals: ["Ecological stabilization", "Wildfire mitigation"],
+          technicalApproach: "Neural IoT alerting and native reforestation.",
+          teamStructure: [{ role: "Lead", qualifications: "PhD Forestry" }],
+          budgetBreakdown: [{ category: "Ops", amount: "$50,000", justification: "Seedlings and sensors" }],
+          timeline: [{ phase: "Planting", duration: "6 months", activities: ["Planting"] }],
+          expectedOutcomes: ["Erosion control"],
+          sustainabilityPlan: "Local community management."
         };
       }
     }
@@ -341,12 +449,22 @@ async function performApiCall<T>(prompt: string, schema?: any, useSearch: boolea
             throw new Error("Invalid JSON response from model.");
         }
     } catch (error) {
-        console.log('API call failed or server offline. Using ultra-reliable local mock fallback generator:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.error('API call failed. Logging to system logs:', errorMessage);
+        
+        let errorType = 'UNKNOWN_FAILURE';
+        if (errorMessage.includes('RATE_LIMIT_EXCEEDED')) errorType = 'RATE_LIMIT';
+        else if (errorMessage.includes('Invalid JSON')) errorType = 'PARSING_FAILURE';
+        else if (errorMessage.includes('API error')) errorType = 'API_SERVER_ERROR';
+
+        addSystemLog('error', `[${errorType}] Module analysis failed: ${errorMessage}. Prompt snippet: ${prompt.substring(0, 50)}...`);
+
         try {
-            const localData = generateLocalMockDataClient(prompt);
+            const localData = generateLocalMockDataClient(prompt, errorMessage);
             return localData as T;
         } catch (fallbackError) {
             console.error("Critical: Local mock generator failed", fallbackError);
+            addSystemLog('error', `[CRITICAL_FAILURE] Fallback generator also failed: ${fallbackError instanceof Error ? fallbackError.message : 'Unknown fallback error'}`);
             throw error;
         }
     }
@@ -471,9 +589,20 @@ export const findGrants = async (
         Provide accurate names, specific purposes, actual deadlines (or recurring windows), and official source URLs.
         Respond in ${language}.
         
-        Return a JSON object with this structure:
+        Return a JSON object with this exact structure (you MUST provide valid values for all these keys, especially matchPercentage from 50 to 100, and choosing one of 'immediate', 'medium', 'extended', or 'recurring' for the timeLimitStatus):
         {
-          "grants": [{"name": "string", "description": "string", "deadline": "string", "link": "string"}],
+          "grants": [
+            {
+              "name": "string", 
+              "description": "string", 
+              "deadline": "string", 
+              "link": "string",
+              "matchPercentage": number,
+              "fundingAmount": "string",
+              "applicableRegions": "string",
+              "timeLimitStatus": "immediate" | "medium" | "extended" | "recurring"
+            }
+          ],
           "sources": [{"uri": "string", "title": "string"}]
         }
     `;
@@ -519,6 +648,72 @@ export const getEnvironmentalAudit = async (
     return performApiCall<EnvironmentalAudit>(prompt);
 };
 
+export const generateGrantProposal = async (
+    grant: Grant,
+    metadata: { 
+        authorName: string, 
+        memberCount: number, 
+        teamResumes: string, 
+        projectDescription: string,
+        implementationTimeline?: string,
+        riskMitigationDetails?: string 
+    },
+    language: string,
+): Promise<GrantProposal> => {
+    const prompt = `
+        Draft a comprehensive, professional, formal academic-style grant proposal for the following grant: "${grant.name}".
+        
+        Project Description: ${metadata.projectDescription}
+        Author/Lead: ${metadata.authorName}
+        Team Size: ${metadata.memberCount}
+        Team Experience: ${metadata.teamResumes}
+        Proposed Timeline Details: ${metadata.implementationTimeline || 'N/A'}
+        Risk Mitigation Strategy: ${metadata.riskMitigationDetails || 'N/A'}
+        Target Grant Intent: ${grant.description}
+        
+        The proposal must be extremely comprehensive, in-depth, and well-structured, aiming for a total length equivalent to 10-15 pages (approx 2000-3000 words).
+        Utilize formal university-level language with academic tone throughout. 
+        It should reflect high scientific rigor and technical depth suitable for competitive international funding agencies (UNDP, GEF, GCF, etc.).
+        
+        For EACH section below, provide SUBSTANTIAL detail (at least 200-300 words each):
+        - A TITLE that is formal and technical.
+        - EXECUTIVE SUMMARY that deeply summarizes the ecological importance, goals, and funding request rationale.
+        - Strategic PROJECT GOALS, clearly defined with quantitative sub-objectives.
+        - TECHNICAL APPROACH explaining the methods in extreme detail (Drones, IoT, bio-hydrogels, soil science, data logging, statistical modeling, etc).
+        - RISK MANAGEMENT explaining potential failures, probabilities, and highly concrete mitigation strategies.
+        - COMMUNITY ENGAGEMENT describing deep local involvement, training programs, and education impact.
+        - Detailed TEAM STRUCTURE mapping the specific personnel roles to the resumes provided with precise duties.
+        - BUDGET BREAKDOWN justifying expenditures with detailed cost rationale.
+        - OPERATIONAL TIMELINE with detailed phases, sub-activities, and milestones.
+        - EXPECTED OUTCOMES (KPIs) with specific projected metrics for success.
+        - SUSTAINABILITY PLAN for after the grant period, detailed with long-term monitoring and funding strategies.
+        - SCIENTIFIC FRAMEWORK (Theoretical background, literature context, and ecological science foundations).
+        - IMPACT MEASUREMENT (How exactly will impact be measured quantitatively, what instruments and baseline data are used).
+        - APPENDIX if any additional data is needed to solidify the proof of concept.
+        
+        Respond in ${language}.
+        
+        Return a JSON object with this structure:
+        {
+          "title": "string",
+          "executiveSummary": "string",
+          "projectGoals": ["string"],
+          "technicalApproach": "string",
+          "riskManagement": "string",
+          "communityEngagement": "string",
+          "teamStructure": [{"role": "string", "qualifications": "string"}],
+          "budgetBreakdown": [{"category": "string", "amount": "string", "justification": "string"}],
+          "timeline": [{"phase": "string", "duration": "string", "activities": ["string"]}],
+          "expectedOutcomes": ["string"],
+          "sustainabilityPlan": "string",
+          "scientificFramework": "string",
+          "impactMeasurement": "string",
+          "appendix": "string"
+        }
+    `;
+    return performApiCall<GrantProposal>(prompt);
+};
+
 export const getUndergroundWaterAnalysis = async (
     location: { lat: number, lng: number },
     language: string,
@@ -537,4 +732,24 @@ export const getUndergroundWaterAnalysis = async (
         }
     `;
     return performApiCall<UndergroundWaterAnalysis>(prompt);
+};
+
+export const generateAnalysisGaps = async (
+    grant: Grant,
+    projectDescription: string,
+    language: string
+): Promise<{ gaps: string[]; potential: string }> => {
+    const prompt = `
+        Perform a gap analysis between the following project and grant.
+        Project: "${projectDescription}"
+        Grant: "${grant.name} - ${grant.description}"
+        Identify potential gaps in alignment and provide a potential match score/description.
+        Respond in ${language}.
+        Return a JSON object with this exact structure:
+        {
+            "gaps": ["string", "string"],
+            "potential": "string"
+        }
+    `;
+    return performApiCall<{ gaps: string[]; potential: string }>(prompt);
 };

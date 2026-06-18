@@ -76,7 +76,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const [toasts, setToasts] = useState<Omit<ToastProps, 'onClose'>[]>([]);
 
     const addToast = (message: string, type: ToastType) => {
-        setToasts(prev => [...prev, { id: Date.now(), message, type }]);
+        const id = Date.now() + Math.random();
+        setToasts(prev => [...prev, { id, message, type }]);
     };
     
     const removeToast = (id: number) => {

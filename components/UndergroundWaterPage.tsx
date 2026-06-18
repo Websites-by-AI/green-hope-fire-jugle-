@@ -6,6 +6,7 @@ import { addSubmission } from '../services/adminService';
 import Map from './Map';
 import MapLegend from './MapLegend';
 import { SectionCard } from './AnalysisResults';
+import { ModuleOptimizer } from './ModuleOptimizer';
 
 const UndergroundWaterPage: React.FC = () => {
     const { t, language } = useLanguage();
@@ -90,7 +91,7 @@ const UndergroundWaterPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-fade-in">
                     <SectionCard title={t('water.depth')} icon="fa-ruler-vertical">
                          <div className="text-3xl font-bold text-blue-300 mb-2">{analysis.estimatedDepth}</div>
-                         <p className="text-slate-400 text-sm">Target depth for drilling or extraction.</p>
+                         <p className="text-slate-400 text-sm">{language === 'fa' ? 'عمق هدف برای حفر یا استخراج.' : 'Target depth for drilling or extraction.'}</p>
                     </SectionCard>
 
                     <SectionCard title={t('water.aquifer')} icon="fa-layer-group">
@@ -103,7 +104,7 @@ const UndergroundWaterPage: React.FC = () => {
 
                     <SectionCard title={t('water.quality')} icon="fa-flask">
                          <p className="text-lg text-white mb-4">{analysis.waterQuality}</p>
-                         <div className="grid grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div>
                                  <span className="text-xs text-slate-500 uppercase block mb-1">{t('water.recharge')}</span>
                                  <span className="text-sm text-slate-300">{analysis.rechargePotential}</span>
@@ -122,12 +123,13 @@ const UndergroundWaterPage: React.FC = () => {
                                     <li key={idx} className="hover:text-white transition-colors">{source}</li>
                                 ))
                             ) : (
-                                <li className="italic text-slate-500">No specific academic sources cited.</li>
+                                <li className="italic text-slate-500">{language === 'fa' ? 'منبع علمی خاصی ذکر نشده است.' : 'No specific academic sources cited.'}</li>
                             )}
                         </ul>
                     </SectionCard>
                 </div>
             )}
+            <ModuleOptimizer moduleName="UndergroundWater" subModules={['Map', 'Analysis', 'Sources']} />
         </div>
     );
 };

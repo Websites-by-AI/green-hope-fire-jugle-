@@ -1,6 +1,125 @@
 import React, { useState } from 'react';
 import { PlantingSuggestion, VegetationAnalysis, RiskAnalysis, WeatherData, CrowdfundingCampaign, useLanguage } from '../types';
 import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
+// Robust phonetic and key term translator to allow standard Helvetica PDF rendering in non-English contexts without crashing
+const cleanPDFText = (text: string | null | undefined): string => {
+    if (!text) return 'N/A';
+    
+    const dict: { [key: string]: string } = {
+        'باران': 'Rain',
+        'برف': 'Snow',
+        'کولاک': 'Blizzard',
+        'گرما': 'Heat',
+        'سرما': 'Cold',
+        'طوفان': 'Storm',
+        'خشک': 'Dry',
+        'ابری': 'Cloudy',
+        'آفتابی': 'Sunny',
+        'معتدل': 'Moderate',
+        'نرمال': 'Normal',
+        'ریسک': 'Risk',
+        'بحرانی': 'Critical',
+        'بالا': 'High',
+        'متوسط': 'Medium',
+        'کم': 'Low',
+        'سرو': 'Cypress',
+        'بلوط': 'Oak',
+        'کاج': 'Pine',
+        'بادام': 'Almond',
+        'پسته': 'Pistachio',
+        'وحشی': 'Wild',
+        'بومی': 'Native',
+        'جنگل': 'Forest',
+        'درخت': 'Tree',
+        'کاشت': 'Planting',
+        'بذر': 'Seeds',
+        'آبخوان': 'Aquifer',
+        'زاگرس': 'Zagros',
+        'البرز': 'Alborz',
+        'حریق': 'Fire',
+        'آتش': 'Fire',
+        'هزینه': 'Cost',
+        'مجموع': 'Total',
+        'آبپاشی': 'Watering',
+        'کارگر': 'Labor',
+        'تکنیک': 'Techniques',
+        'گونه': 'Species',
+        'پیشنهادی': 'Suggested',
+        'پایش': 'Monitoring',
+        'پتنت': 'Patent',
+        'ایده': 'Idea',
+        'امید': 'Hope',
+        'سبز': 'Green',
+        'تومان': 'Toman',
+        'ریال': 'Rial',
+        'دلار': 'USD',
+        'روز': 'Days',
+        'ماه': 'Months',
+        'هفته': 'Weeks',
+        'سال': 'Years',
+        'متر': 'Meters',
+        'هکتار': 'Hectares',
+        'عمق': 'Depth',
+        'دما': 'Temperature',
+        'بارندگی': 'Precipitation',
+        'پوشش': 'Cover',
+        'گیاهی': 'Vegetation',
+        'سلامت': 'Health',
+        'تهدید': 'Threat',
+        'تخریب': 'Degradation',
+        'سیل': 'Flood',
+        'زلزله': 'Earthquake',
+        'رانش': 'Landslide',
+        'آفات': 'Pests',
+        'بیماری': 'Diseases',
+        'انسان': 'Human',
+        'طبیعت': 'Nature',
+        'پایدار': 'Sustainable',
+        'توسعه': 'Development',
+        'حفاظت': 'Conservation',
+    };
+
+    let processed = text;
+    // Replace dictionary terms
+    Object.keys(dict).forEach(key => {
+        const regex = new RegExp(key, 'g');
+        processed = processed.replace(regex, dict[key]);
+    });
+
+    const latinMap: { [key: string]: string } = {
+        'آ': 'A', 'ا': 'a', 'ب': 'b', 'پ': 'p', 'ت': 't', 'ث': 's', 'ج': 'j', 'چ': 'ch', 'ح': 'h', 'خ': 'kh',
+        'د': 'd', 'ذ': 'z', 'ر': 'r', 'ز': 'z', 'ژ': 'zh', 'س': 's', 'ش': 'sh', 'ص': 's', 'ض': 'z', 'ط': 't',
+        'ظ': 'z', 'ع': 'a', 'غ': 'gh', 'ف': 'f', 'ق': 'gh', 'ک': 'k', 'گ': 'g', 'ل': 'l', 'م': 'm', 'ن': 'n',
+        'و': 'v', 'ه': 'h', 'ی': 'y', 'ئ': 'e', 'ي': 'y', 'ك': 'k', 'ة': 'h', 'ء': '\'', 'ٌ': '', 'ً': '', 'ّ': '',
+        '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4', '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+        '،': ',', '؛': ';', '؟': '?'
+    };
+
+    const turkishMap: { [key: string]: string } = {
+        'ç': 'c', 'Ç': 'C', 'ğ': 'g', 'Ğ': 'G', 'ı': 'i', 'İ': 'I', 'ö': 'o', 'Ö': 'O', 'ş': 's', 'Ş': 'S', 'ü': 'u', 'Ü': 'U'
+    };
+
+    let result = '';
+    for (let i = 0; i < processed.length; i++) {
+        const char = processed[i];
+        if (latinMap[char] !== undefined) {
+            result += latinMap[char];
+        } else if (turkishMap[char] !== undefined) {
+            result += turkishMap[char];
+        } else {
+            if (char.charCodeAt(0) <= 127) {
+                result += char;
+            } else {
+                result += ' ';
+            }
+        }
+    }
+
+    return result.replace(/\s+/g, ' ').trim();
+};
 
 export interface SectionCardProps {
     title: string;
@@ -29,77 +148,376 @@ interface AnalysisResultsProps {
   crowdfundingCampaign: CrowdfundingCampaign | null;
   onGenerateCampaign: () => void;
   isGeneratingCampaign: boolean;
+  selectedLocation?: { lat: number; lng: number } | null;
 }
 
 const AnalysisResults: React.FC<AnalysisResultsProps> = ({ 
     plantingSuggestion, vegetationAnalysis, riskAnalysis, weatherData, 
-    crowdfundingCampaign, onGenerateCampaign, isGeneratingCampaign 
+    crowdfundingCampaign, onGenerateCampaign, isGeneratingCampaign,
+    selectedLocation
 }) => {
     const { t, language } = useLanguage();
     const [showMoreDetails, setShowMoreDetails] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
+    const [copiedMD, setCopiedMD] = useState(false);
+    const [copiedJSON, setCopiedJSON] = useState(false);
 
-    const handleDownloadReport = async () => {
+
+    const getMarkdownTemplate = () => {
+        const specs = (plantingSuggestion.suggestedSpecies || []).map(s => `- **${s.name}**: ${s.reason}`).join('\n');
+        const risks = (riskAnalysis.naturalDisasters || []).map(r => `- **${r.type}** (${r.riskLevel}): Mitigation: ${r.mitigation}`).join('\n');
+        const dominant = (vegetationAnalysis.dominantSpecies || []).join(', ');
+
+        return `# ${t('header.title')} - ${t('home.tabs.reforestation')}
+        
+## ${t('analysis.weather')}
+- **Summary**: ${weatherData?.summary || 'N/A'}
+- **${t('analysis.weather.temp')}**: ${weatherData?.temperature || 'N/A'}
+- **${t('analysis.weather.precip')}**: ${weatherData?.precipitation || 'N/A'}
+- **${t('analysis.weather.wind')}**: ${weatherData?.wind || 'N/A'}
+
+## ${t('analysis.vegetation')}
+- **${t('analysis.vegetation.current')}**: ${vegetationAnalysis.currentVegetation}
+- **${t('analysis.vegetation.dominant')}**: ${dominant}
+- **${t('analysis.vegetation.health')}**: ${vegetationAnalysis.healthStatus}
+- **${t('analysis.vegetation.threats')}**: ${vegetationAnalysis.deforestationThreat}
+
+## ${t('analysis.strategy')}
+### ${t('analysis.strategy.species')}
+${specs}
+
+### ${t('analysis.strategy.techniques')}
+${plantingSuggestion.plantingTechniques}
+
+### ${t('analysis.strategy.benefits')}
+${plantingSuggestion.environmentalBenefits}
+
+### ${t('analysis.strategy.cost')}
+- ${t('analysis.strategy.cost.tree')}: ${plantingSuggestion.estimatedCost?.treeCost || 'N/A'}
+- ${t('analysis.strategy.cost.watering')}: ${plantingSuggestion.estimatedCost?.wateringCost || 'N/A'}
+- ${t('analysis.strategy.cost.labor')}: ${plantingSuggestion.estimatedCost?.laborCost || 'N/A'}
+- ${t('analysis.strategy.cost.other')}: ${plantingSuggestion.estimatedCost?.otherCosts || 'N/A'}
+- **${t('analysis.strategy.cost.total')}**: ${plantingSuggestion.estimatedCost?.totalCost || 'N/A'}
+
+- **${t('analysis.strategy.duration')}**: ${plantingSuggestion.plantingDuration || 'N/A'}
+- **${t('analysis.strategy.area')}**: ${plantingSuggestion.areaPlanted || 'N/A'}
+- **${t('analysis.strategy.location')}**: ${plantingSuggestion.locationDetails || 'N/A'}
+
+### ${t('analysis.strategy.care')}
+${plantingSuggestion.careAndMaintenance}
+
+## ${t('analysis.risk')}
+### ${t('analysis.risk.natural')}
+${risks}
+
+### ${t('analysis.risk.human')}
+${riskAnalysis.humanActivityImpact}
+
+### ${t('analysis.risk.pests')}
+${riskAnalysis.pestAndDiseaseThreats}
+`;
+    };
+
+    const getJSONTemplate = () => {
+        return JSON.stringify({
+            title: `${t('header.title')} - ${t('home.tabs.reforestation')}`,
+            weather: weatherData,
+            vegetation: {
+                current: vegetationAnalysis.currentVegetation,
+                dominantSpecies: vegetationAnalysis.dominantSpecies,
+                health: vegetationAnalysis.healthStatus,
+                threats: vegetationAnalysis.deforestationThreat
+            },
+            strategy: {
+                species: plantingSuggestion.suggestedSpecies,
+                techniques: plantingSuggestion.plantingTechniques,
+                benefits: plantingSuggestion.environmentalBenefits,
+                costs: plantingSuggestion.estimatedCost,
+                duration: plantingSuggestion.plantingDuration,
+                area: plantingSuggestion.areaPlanted,
+                location: plantingSuggestion.locationDetails,
+                care: plantingSuggestion.careAndMaintenance
+            },
+            risks: {
+                naturalDisasters: riskAnalysis.naturalDisasters,
+                humanImpact: riskAnalysis.humanActivityImpact,
+                pestsAndDiseases: riskAnalysis.pestAndDiseaseThreats
+            }
+        }, null, 2);
+    };
+
+    const handleCopyMarkdown = () => {
+        navigator.clipboard.writeText(getMarkdownTemplate());
+        setCopiedMD(true);
+        setTimeout(() => setCopiedMD(false), 2500);
+    };
+
+    const handleCopyJSON = () => {
+        navigator.clipboard.writeText(getJSONTemplate());
+        setCopiedJSON(true);
+        setTimeout(() => setCopiedJSON(false), 2500);
+    };
+
+    const getCopyMDLabel = () => {
+        if (language === 'fa') return copiedMD ? 'مارک‌داون کپی شد!' : 'کپی مارک‌داون (Markdown)';
+        if (language === 'ar') return copiedMD ? 'تم النسخ!' : 'نسخ Markdown';
+        return copiedMD ? 'Markdown Copied!' : 'Copy Markdown';
+    };
+
+    const getCopyJSONLabel = () => {
+        if (language === 'fa') return copiedJSON ? 'JSON کپی شد!' : 'کپی جی‌سان (JSON)';
+        if (language === 'ar') return copiedJSON ? 'تم النسخ!' : 'نسخ JSON';
+        return copiedJSON ? 'JSON Copied!' : 'Copy JSON';
+    };
+
+    const handleDownloadPDF = async () => {
         setIsExporting(true);
         try {
-            const content = `
-                <!DOCTYPE html>
-                <html lang="${language}" dir="${language === 'fa' || language === 'ar' ? 'rtl' : 'ltr'}">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>${t('header.title')} Report</title>
-                    <style>
-                        body { font-family: sans-serif; padding: 40px; line-height: 1.6; color: #1e293b; }
-                        h1 { color: #059669; border-bottom: 2px solid #059669; padding-bottom: 10px; }
-                        h2 { color: #10b981; margin-top: 30px; }
-                        h3 { color: #0f766e; }
-                        .cost-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                        .cost-table td, .cost-table th { border: 1px solid #e2e8f0; padding: 12px; text-align: left; }
-                        .cost-table th { bg-color: #f8fafc; }
-                        .total { font-weight: bold; font-size: 1.2em; color: #059669; }
-                    </style>
-                </head>
-                <body>
-                    <h1>${t('header.title')} - ${t('home.tabs.reforestation')}</h1>
-                    
-                    <h2>${t('analysis.strategy')}</h2>
-                    <h3>${t('analysis.strategy.species')}</h3>
-                    <ul>
-                        ${(plantingSuggestion.suggestedSpecies || []).map(s => `<li><strong>${s.name}</strong>: ${s.reason}</li>`).join('')}
-                    </ul>
-                    
-                    <h3>${t('analysis.strategy.cost')}</h3>
-                    <table class="cost-table">
-                        <tr><td>${t('analysis.strategy.cost.tree')}</td><td>${plantingSuggestion.estimatedCost?.treeCost}</td></tr>
-                        <tr><td>${t('analysis.strategy.cost.watering')}</td><td>${plantingSuggestion.estimatedCost?.wateringCost}</td></tr>
-                        <tr><td>${t('analysis.strategy.cost.labor')}</td><td>${plantingSuggestion.estimatedCost?.laborCost}</td></tr>
-                        <tr><td>${t('analysis.strategy.cost.other')}</td><td>${plantingSuggestion.estimatedCost?.otherCosts}</td></tr>
-                        <tr class="total"><td>${t('analysis.strategy.cost.total')}</td><td>${plantingSuggestion.estimatedCost?.totalCost}</td></tr>
-                    </table>
-                    
-                    <p><strong>${t('analysis.strategy.duration')}</strong>: ${plantingSuggestion.plantingDuration}</p>
-                    <p><strong>${t('analysis.strategy.location')}</strong>: ${plantingSuggestion.locationDetails}</p>
-                    <p><strong>${t('analysis.strategy.area')}</strong>: ${plantingSuggestion.areaPlanted}</p>
-
-                    <h3>${t('analysis.strategy.techniques')}</h3>
-                    <p>${plantingSuggestion.plantingTechniques}</p>
-                    
-                    <h3>${t('analysis.strategy.care')}</h3>
-                    <p>${plantingSuggestion.careAndMaintenance}</p>
-                    
-                    <h2>${t('analysis.vegetation')}</h2>
-                    <p><strong>${t('analysis.vegetation.current')}</strong>: ${vegetationAnalysis.currentVegetation}</p>
-                    <p><strong>${t('analysis.vegetation.health')}</strong>: ${vegetationAnalysis.healthStatus}</p>
-                    <p><strong>${t('analysis.vegetation.threats')}</strong>: ${vegetationAnalysis.deforestationThreat}</p>
-                    
-                    <h2>${t('analysis.risk')}</h2>
-                    ${(riskAnalysis.naturalDisasters || []).map(r => `<p><strong>${r.type}</strong> (${r.riskLevel}): ${r.mitigation}</p>`).join('')}
-                </body>
-                </html>
-            `;
+            const doc = new jsPDF();
             
-            const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-            saveAs(blob, `GreenHope_Report_${new Date().toISOString().split('T')[0]}.html`);
+            // Draw branding header bar (Emerald Green Theme)
+            doc.setFillColor(16, 185, 129); // emerald-500
+            doc.rect(0, 0, 210, 40, 'F');
+            
+            // Overlay thin accent bar (Teal)
+            doc.setFillColor(15, 118, 110); // teal-700
+            doc.rect(0, 40, 210, 4, 'F');
+
+            // Header text
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(22);
+            doc.text('GREENHOPE GUARDIAN ECO-REPORT', 14, 20);
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(11);
+            doc.setTextColor(204, 251, 241); // cyan-100
+            doc.text('Autonomous Satellite Surveillance & Reforestation Blueprint', 14, 28);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 35);
+            
+            // Section coordinates / Metadata Panel
+            doc.setTextColor(30, 41, 59); // slate-800
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('1. REPORT METADATA & FIELD COORDINATES', 14, 55);
+            
+            // Create field details metadata table
+            const latVal = selectedLocation ? selectedLocation.lat.toFixed(6) : '36.175683';
+            const lngVal = selectedLocation ? selectedLocation.lng.toFixed(6) : '58.465929';
+            const cleanLocationDetails = cleanPDFText(plantingSuggestion.locationDetails);
+            const cleanAreaPlanted = cleanPDFText(plantingSuggestion.areaPlanted);
+            const cleanDuration = cleanPDFText(plantingSuggestion.plantingDuration);
+
+            (doc as any).autoTable({
+                startY: 60,
+                theme: 'striped',
+                headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Metadata Field', 'Value / Details']],
+                body: [
+                    ['Target Coordinate (latitude)', latVal],
+                    ['Target Coordinate (longitude)', lngVal],
+                    ['Designated Region & Watershed', cleanLocationDetails],
+                    ['Target Planting Coverage Area', cleanAreaPlanted],
+                    ['Planned Reforestation Duration', cleanDuration]
+                ]
+            });
+
+            // 2. Weather & Climate Profile Section
+            let currentY = (doc as any).previousAutoTable.finalY + 12;
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('2. WEATHER METRICS & MICROCLIMATE PROFILE', 14, currentY);
+            
+            const cleanSummary = weatherData ? cleanPDFText(weatherData.summary) : 'N/A';
+            const cleanTemp = weatherData ? cleanPDFText(weatherData.temperature) : 'N/A';
+            const cleanPrecip = weatherData ? cleanPDFText(weatherData.precipitation) : 'N/A';
+            const cleanWind = weatherData ? cleanPDFText(weatherData.wind) : 'N/A';
+
+            (doc as any).autoTable({
+                startY: currentY + 5,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Climate Parameter', 'Metric Assessment / Observations']],
+                body: [
+                    ['Microclimate Summary Indicator', cleanSummary],
+                    ['Ambient Air Temperature Forecast', cleanTemp],
+                    ['Historical / Expected Precipitation', cleanPrecip],
+                    ['Winds & Local Airflow Dynamics', cleanWind]
+                ]
+            });
+
+            // 3. Existing Soil & Canopy Vegetation Analysis Section
+            currentY = (doc as any).previousAutoTable.finalY + 12;
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('3. CANOPY HEALTH & VEGETATION DIAGNOSTICS', 14, currentY);
+
+            const cleanCurrentVeg = cleanPDFText(vegetationAnalysis.currentVegetation);
+            const cleanVegHealth = cleanPDFText(vegetationAnalysis.healthStatus);
+            const cleanVegThreats = cleanPDFText(vegetationAnalysis.deforestationThreat);
+            const cleanDominant = cleanPDFText((vegetationAnalysis.dominantSpecies || []).join(', '));
+
+            (doc as any).autoTable({
+                startY: currentY + 5,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Vegetor Metric', 'Analytical Diagnostics']],
+                body: [
+                    ['Current Ground Vegetation Cover', cleanCurrentVeg],
+                    ['Canopy & Soil Biological Health', cleanVegHealth],
+                    ['Recorded Degradation / Deforestation Threat', cleanVegThreats],
+                    ['Predefined / Dominant Ecosystem Species', cleanDominant]
+                ]
+            });
+
+            // Page Break for strategies, costs, and risks
+            doc.addPage();
+            
+            // Beautiful green top banner on secondary pages
+            doc.setFillColor(15, 118, 110);
+            doc.rect(0, 0, 210, 15, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(10);
+            doc.text('GREENHOPE GUARDIAN ECO-REPORT | Page 2', 14, 10);
+
+            // 4. Strategic Planting blueprint
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('4. REFORESTATION BLUEPRINT & TAXONOMY PLAN', 14, 28);
+
+            const speciesList = (plantingSuggestion.suggestedSpecies || []).map(s => [
+                cleanPDFText(s.name), 
+                cleanPDFText(s.reason)
+            ]);
+
+            (doc as any).autoTable({
+                startY: 33,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Native Bio-Species', 'Structural / Environmental Planting Reason']],
+                body: speciesList.length > 0 ? speciesList : [['No Species Suggestions Available', 'N/A']]
+            });
+
+            // Techniques, Benefits, Care
+            currentY = (doc as any).previousAutoTable.finalY + 10;
+            const cleanTechniques = cleanPDFText(plantingSuggestion.plantingTechniques);
+            const cleanBenefits = cleanPDFText(plantingSuggestion.environmentalBenefits);
+            const cleanCare = cleanPDFText(plantingSuggestion.careAndMaintenance);
+
+            (doc as any).autoTable({
+                startY: currentY,
+                theme: 'grid',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Field Protocol', 'Execution Guidelines']],
+                body: [
+                    ['Specialized Re-planting Techniques', cleanTechniques],
+                    ['Target Ecosystem Benefits', cleanBenefits],
+                    ['Long-term Care & Irrigation Maintenance Plan', cleanCare]
+                ]
+            });
+
+            // 5. Financial Forecast & Cost Analytics Section
+            currentY = (doc as any).previousAutoTable.finalY + 12;
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('5. THEMED BUDGET FORECAST & DEPLOYMENT COST', 14, currentY);
+
+            const treeCost = cleanPDFText(plantingSuggestion.estimatedCost?.treeCost);
+            const waterCost = cleanPDFText(plantingSuggestion.estimatedCost?.wateringCost);
+            const laborCost = cleanPDFText(plantingSuggestion.estimatedCost?.laborCost);
+            const otherCosts = cleanPDFText(plantingSuggestion.estimatedCost?.otherCosts);
+            const totalCost = cleanPDFText(plantingSuggestion.estimatedCost?.totalCost);
+
+            (doc as any).autoTable({
+                startY: currentY + 5,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Budget Categorization', 'Projected Costs / Allocation Details']],
+                body: [
+                    ['Saplings / Native Seeds Cost', treeCost],
+                    ['Primary Watering & Aquifer Irrigation Cost', waterCost],
+                    ['Local Community Labor and Training Cost', laborCost],
+                    ['Operations, Logistics & Satellite Supervision Cost', otherCosts],
+                    ['TOTAL REFORESTATION CAPITAL NEEDED', totalCost]
+                ]
+            });
+
+            // 6. Natural & Anthropogenic Risk Assessment Section
+            currentY = (doc as any).previousAutoTable.finalY + 12;
+            
+            // Check if Y is too close to bottom of page (e.g. 250+) 
+            if (currentY > 240) {
+                doc.addPage();
+                doc.setFillColor(15, 118, 110);
+                doc.rect(0, 0, 210, 15, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text('GREENHOPE GUARDIAN ECO-REPORT | Page 3', 14, 10);
+                currentY = 28;
+            }
+
+            doc.setTextColor(30, 41, 59);
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.text('6. COMPREHENSIVE ECO-RISK ASSESSMENT', 14, currentY);
+
+            const risksBody = (riskAnalysis.naturalDisasters || []).map(r => [
+                cleanPDFText(r.type),
+                cleanPDFText(r.riskLevel),
+                cleanPDFText(r.mitigation)
+            ]);
+
+            (doc as any).autoTable({
+                startY: currentY + 5,
+                theme: 'striped',
+                headStyles: { fillColor: [15, 118, 110], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Identified Hazard', 'Risk Level', 'Active Mitigation Standard Protocol']],
+                body: risksBody.length > 0 ? risksBody : [['No natural risks cataloged', 'N/A', 'N/A']]
+            });
+
+            // Human Activity and Pests
+            currentY = (doc as any).previousAutoTable.finalY + 8;
+            if (currentY > 260) {
+                doc.addPage();
+                doc.setFillColor(15, 118, 110);
+                doc.rect(0, 0, 210, 15, 'F');
+                doc.setTextColor(255, 255, 255);
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(10);
+                doc.text('GREENHOPE GUARDIAN ECO-REPORT | Appendix', 14, 10);
+                currentY = 28;
+            }
+
+            const cleanHumanImpact = cleanPDFText(riskAnalysis.humanActivityImpact);
+            const cleanPests = cleanPDFText(riskAnalysis.pestAndDiseaseThreats);
+
+            (doc as any).autoTable({
+                startY: currentY,
+                theme: 'grid',
+                headStyles: { fillColor: [30, 41, 59], textColor: [255, 255, 255], fontStyle: 'bold' },
+                bodyStyles: { font: 'helvetica', fontSize: 9 },
+                head: [['Socio-Environmental Threat Area', 'Detailed Risk Analysis & Mitigation Impact']],
+                body: [
+                    ['Anthropogenic / Human Activity Ecological Impact', cleanHumanImpact],
+                    ['Pathological / Insect & Pest Infestation Threats', cleanPests]
+                ]
+            });
+
+            // Save PDF
+            doc.save(`GreenHope_Eco_Report_${new Date().toISOString().split('T')[0]}.pdf`);
         } catch (error) {
             console.error('Export failed:', error);
         } finally {
@@ -109,17 +527,43 @@ const AnalysisResults: React.FC<AnalysisResultsProps> = ({
 
     return (
         <div className="space-y-8 animate-fade-in">
-            {/* Header with Download Button */}
-            <div className="flex justify-between items-center">
+            {/* Header with Download & Copy Buttons */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h2 className="text-2xl font-bold text-white">{t('home.tabs.reforestation')}</h2>
-                <button 
-                    onClick={handleDownloadReport}
-                    disabled={isExporting}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg border border-slate-600 transition disabled:opacity-50"
-                >
-                    {isExporting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-download"></i>}
-                    {t('analysis.downloadReport', { defaultValue: 'Download HTML Report' })}
-                </button>
+                <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
+                    <button 
+                        onClick={handleCopyMarkdown}
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg border transition duration-200 ${
+                            copiedMD 
+                                ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/30' 
+                                : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:border-slate-600'
+                        }`}
+                    >
+                        {copiedMD ? <i className="fas fa-check text-emerald-400"></i> : <i className="fas fa-file-alt text-indigo-400"></i>}
+                        {getCopyMDLabel()}
+                    </button>
+                    
+                    <button 
+                        onClick={handleCopyJSON}
+                        className={`flex items-center gap-2 px-4 py-2 text-xs font-bold rounded-lg border transition duration-200 ${
+                            copiedJSON 
+                                ? 'bg-emerald-950/80 text-emerald-400 border-emerald-500/30' 
+                                : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 hover:border-slate-600'
+                        }`}
+                    >
+                        {copiedJSON ? <i className="fas fa-check text-emerald-400"></i> : <i className="fas fa-file-code text-amber-400"></i>}
+                        {getCopyJSONLabel()}
+                    </button>
+
+                    <button 
+                        onClick={handleDownloadPDF}
+                        disabled={isExporting}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg border border-emerald-500 transition disabled:opacity-50"
+                    >
+                        {isExporting ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-download"></i>}
+                        {t('analysis.downloadReport', { defaultValue: 'Download PDF Report' })}
+                    </button>
+                </div>
             </div>
             {/* Weather & Vegetation Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

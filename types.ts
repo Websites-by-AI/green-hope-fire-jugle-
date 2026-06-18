@@ -1,7 +1,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 
 // Language and Translation types
-export type Language = 'en' | 'fa' | 'ar';
+export type Language = 'en' | 'fa' | 'ar' | 'tr';
 
 export interface Translations {
   [key: string]: {
@@ -20,6 +20,16 @@ export interface Source {
     uri: string;
     title: string;
 }
+
+export const localizeNumber = (num: number | string, language: Language): string => {
+    const strNum = num.toString();
+    if (language === 'fa') {
+        return strNum.replace(/[0-9]/g, (d) => String.fromCharCode(d.charCodeAt(0) + 1728));
+    } else if (language === 'ar') {
+         return strNum.replace(/[0-9]/g, (d) => String.fromCharCode(d.charCodeAt(0) + 1584));
+    }
+    return strNum;
+};
 
 export interface PlantingSuggestion {
     suggestedSpecies: { name: string; reason: string; }[];
@@ -88,6 +98,10 @@ export interface Grant {
     description: string;
     deadline: string;
     link: string;
+    matchPercentage?: number;
+    fundingAmount?: string;
+    applicableRegions?: string;
+    timeLimitStatus?: 'immediate' | 'medium' | 'extended' | 'recurring';
 }
 
 export interface EnvironmentalAudit {
@@ -117,6 +131,55 @@ export interface UndergroundWaterAnalysis {
     academicSources: string[];
 }
 
+
+export interface GrantProposal {
+    title: string;
+    executiveSummary: string;
+    projectGoals: string[];
+    technicalApproach: string;
+    riskManagement?: string;
+    communityEngagement?: string;
+    teamStructure: {
+        role: string;
+        qualifications: string;
+    }[];
+    budgetBreakdown: {
+        category: string;
+        amount: string;
+        justification: string;
+    }[];
+    timeline: {
+        phase: string;
+        duration: string;
+        activities: string[];
+    }[];
+    expectedOutcomes: string[];
+    sustainabilityPlan: string;
+    scientificFramework?: string; // New: for that "article" feel
+    impactMeasurement?: string;  // New: for academic rigor
+    appendix?: string;
+}
+
+export interface Product {
+    id: string;
+    name: string;
+    price: string;
+    category: 'seeds' | 'tech' | 'tools';
+    description: string;
+    specs: string[];
+    image: string;
+    stock: number;
+}
+
+export interface BacklogItem {
+    id: string;
+    title: string;
+    status: 'completed' | 'in-progress' | 'planned';
+    date: string;
+    priority: 'low' | 'medium' | 'high';
+    category: string;
+    assignee: string;
+}
 
 // --- Language Provider ---
 
@@ -235,46 +298,46 @@ const translations: Translations = {
     },
     fa: {
         'header.title': 'ابتکار امید سبز',
-        'footer.copyright': '© ۲۰۲۴ ابتکار امید سبز. پرورش فردایی سبزتر با هوش مصنوعی.',
-        'error': 'یک خطای غیرمنتظره رخ داد. لطفاً بعداً دوباره امتحان کنید.',
+        'footer.copyright': '© ۲۰۲۴ ابتکار امید سبز. ترویج فردایی سبزتر با راهکارهای هوش مصنوعی.',
+        'error': 'خطای غیرمنتظره‌ای رخ داد. لطفاً بعداً دوباره امتحان کنید.',
         'loading': 'در حال بارگذاری...',
-        'quotaErrorModal.title': 'سهمیه API تمام شد',
-        'quotaErrorModal.body': 'شما به حد مجاز درخواست API خود برای امروز رسیده‌اید. برای ادامه استفاده از سرویس، لطفاً تنظیمات صورتحساب خود را بررسی کنید.',
-        'quotaErrorModal.cta': 'بررسی صورتحساب',
+        'quotaErrorModal.title': 'سهمیه API تکمیل شده است',
+        'quotaErrorModal.body': 'شما به سقف مجاز درخواست‌های API روزانه رسیده‌اید. برای ادامه، لطفاً تنظیمات حساب خود را بررسی نمایید.',
+        'quotaErrorModal.cta': 'بررسی صورت‌حساب',
         'quotaErrorModal.close': 'بستن',
-        'rateLimitError': ({ seconds }) => `از حد مجاز درخواست فراتر رفته‌اید. لطفاً ${seconds} ثانیه صبر کنید و دوباره امتحان کنید.`,
-        'networkError': 'یک خطای شبکه رخ داد. لطفاً اتصال خود را بررسی کرده و دوباره امتحان کنید.',
+        'rateLimitError': ({ seconds }) => `از حد مجاز درخواست فراتر رفته‌اید. لطفاً ${seconds} ثانیه منتظر بمانید.`,
+        'networkError': 'مشکل شبکه رخ داده است. لطفاً اتصال خود را بررسی کرده و دوباره تلاش کنید.',
         'mapLegend.title': 'راهنما',
         'homeGardening.conditions.sunnyBalcony': 'بالکن آفتابی',
         'homeGardening.conditions.shadedPatio': 'پاسیو سایه‌دار',
         'homeGardening.conditions.indoorLowLight': 'داخل ساختمان (نور کم)',
         'homeGardening.conditions.indoorHighLight': 'داخل ساختمان (نور زیاد)',
-        'homeGardening.title': 'مشاور باغبانی خانگی',
-        'homeGardening.description': 'پیشنهادات گیاهی شخصی‌سازی شده برای محیط خانه خود دریافت کنید.',
-        'homeGardening.conditionLabel': 'شرایط خود را انتخاب کنید',
-        'homeGardening.getSuggestions': 'دریافت پیشنهادات',
-        'homeGardening.resultsTitle': 'پیشنهادات گیاهی شخصی‌سازی شده شما',
+        'homeGardening.title': 'مشاور باغبانی هوشمند',
+        'homeGardening.description': 'دریافت توصیه‌های شخصی جهت پرورش گیاهان در محیط خانه.',
+        'homeGardening.conditionLabel': 'انتخاب شرایط محیطی',
+        'homeGardening.getSuggestions': 'دریافت توصیه‌ها',
+        'homeGardening.resultsTitle': 'توصیه‌های شخصی‌سازی شده گیاهان',
         'homeGardening.suitableFor': 'مناسب برای',
-        'homeGardening.careInstructions': 'دستورالعمل‌های مراقبت',
+        'homeGardening.careInstructions': 'دستورالعمل‌های نگهداری',
         
         // Homepage
-        'home.title': 'پیشگیری از آتش‌سوزی و حفاظت هوشمند جنگل‌ها (امید سبز)',
-        'home.subtitle': 'تمرکز اصلی پلتفرم بر پایش لحظه‌ای و پیشگیری فعال از حریق اراضی و جنگل‌های زاگرس و البرز است. فرآیندهای بهسازی و جنگل‌کاری در اولویت پس از مهار ریسک‌ها قرار دارند.',
-        'home.enableGrounding': 'فعال‌سازی جستجوی گوگل',
-        'home.groundingSub': 'اتصال به داده‌های لحظه‌ای',
+        'home.title': 'پیشگیری هوشمند از حریق و حفاظت جنگل',
+        'home.subtitle': 'پیش‌بینی و کاهش مخاطرات آتش‌سوزی جنگل با بهره‌گیری از داده‌های ماهواره‌ای و حسگرهای IoT. راهبردهای بهسازی پوشش گیاهی و جنگل‌کاری، در فاز دوم و پس از تأمین امنیت اراضی اجرا خواهند شد.',
+        'home.enableGrounding': 'فعال‌سازی جستجوی لحظه‌ای با گوگل',
+        'home.groundingSub': 'اتصال به داده‌های برخط (Real-time)',
         'home.sampleLocation': 'نمونه: روستای سالاریه',
-        'home.analyzeBtn': 'تحلیل مکان',
+        'home.analyzeBtn': 'شروع تحلیل مکان',
         'home.analyzingBtn': 'در حال تحلیل...',
         'home.analysisFailed': 'تحلیل ناموفق بود',
-        'home.tabs.reforestation': 'برنامه‌ریزی سلامت و حفاظت جنگل',
+        'home.tabs.reforestation': 'مدیریت احیاء و سلامت جنگل',
         'home.tabs.gardening': 'باغبانی خانگی',
-        'home.tabs.grants': 'ممیزی و گرنت‌یاب (Audit)',
+        'home.tabs.grants': 'ممیزی رسمی و گرنت‌ها',
         'home.tabs.water': 'منابع آب زیرزمینی',
-        'home.tabs.smartFireSense': 'هشدار هوشمند آتش‌سوزی (SmartFireSense)',
-        'home.tabs.estimator': 'برآورد هزینه‌ها و پروژه',
+        'home.tabs.smartFireSense': 'سامانه هشدار حریق (SmartFireSense)',
+        'home.tabs.estimator': 'برآوردگر هزینه‌های پروژه',
         'home.tabs.invest': 'سرمایه‌گذاری سبز',
         'home.tabs.newsletter': 'انتشارات و خبرنامه',
-        'home.map.selected': 'مکان انتخاب شده',
+        'home.map.selected': 'مکان انتخابی',
         'home.map.analyzed': 'منطقه تحلیل شده',
 
         // Analysis Results
@@ -347,45 +410,45 @@ const translations: Translations = {
     },
     ar: {
         'header.title': 'مبادرة الأمل الأخضر',
-        'footer.copyright': '© 2024 مبادرة الأمل الأخضر. رعاية غد أكثر خضرة بالذكاء الاصطناعي.',
+        'footer.copyright': '© 2024 مبادرة الأمل الأخضر. تعزيز مستقبل مستدام عبر حلول الذكاء الاصطناعي.',
         'error': 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى لاحقًا.',
-        'loading': 'جار التحميل...',
+        'loading': 'جارٍ التحميل...',
         'quotaErrorModal.title': 'تم استنفاد حصة API',
-        'quotaErrorModal.body': 'لقد وصلت إلى حد طلبات API الخاص بك لهذا اليوم. لمتابعة استخدام الخدمة، يرجى التحقق من إعدادات الفوترة الخاصة بك.',
-        'quotaErrorModal.cta': 'التحقق من الفوترة',
+        'quotaErrorModal.body': 'لقد وصلت إلى حد طلبات API اليومي. لمواصلة استخدام الخدمة، يرجى مراجعة إعدادات الفوترة.',
+        'quotaErrorModal.cta': 'مراجعة الفوترة',
         'quotaErrorModal.close': 'إغلاق',
-        'rateLimitError': ({ seconds }) => `تم تجاوز حد المعدل. يرجى الانتظار ${seconds} ثانية قبل المحاولة مرة أخرى.`,
+        'rateLimitError': ({ seconds }) => `تم تجاوز حد الطلبات. يرجى الانتظار ${seconds} ثانية قبل المحاولة مجددًا.`,
         'networkError': 'حدث خطأ في الشبكة. يرجى التحقق من اتصالك والمحاولة مرة أخرى.',
         'mapLegend.title': 'مفتاح الخريطة',
         'homeGardening.conditions.sunnyBalcony': 'شرفة مشمسة',
         'homeGardening.conditions.shadedPatio': 'فناء مظلل',
         'homeGardening.conditions.indoorLowLight': 'داخلي (إضاءة منخفضة)',
         'homeGardening.conditions.indoorHighLight': 'داخلي (إضاءة عالية)',
-        'homeGardening.title': 'مستشار البستنة المنزلية',
+        'homeGardening.title': 'مستشار البستنة الذكي',
         'homeGardening.description': 'احصل على اقتراحات نباتات مخصصة لبيئتك المنزلية.',
-        'homeGardening.conditionLabel': 'اختر حالتك',
-        'homeGardening.getSuggestions': 'احصل على اقتراحات',
+        'homeGardening.conditionLabel': 'اختر ظروفك',
+        'homeGardening.getSuggestions': 'الحصول على اقتراحات',
         'homeGardening.resultsTitle': 'اقتراحات النباتات المخصصة لك',
         'homeGardening.suitableFor': 'مناسب لـ',
         'homeGardening.careInstructions': 'تعليمات العناية',
         
         // Homepage
-        'home.title': 'إعادة التشجير بالذكاء الاصطناعي',
-        'home.subtitle': 'اختر موقعًا لتلقي تحليل بيئي شامل واستراتيجية زراعة وخطة تمويل تم إنشاؤها بواسطة Gemini 2.0.',
-        'home.enableGrounding': 'تفعيل بحث جوجل',
-        'home.groundingSub': 'الاتصال بالبيانات الحية',
+        'home.title': 'الوقاية الذكية من الحرائق وحماية الغابات',
+        'home.subtitle': 'التنبؤ بمخاطر حرائق الغابات والحد منها باستخدام بيانات الأقمار الصناعية ومستشعرات إنترنت الأشياء الذكية. يتم تنفيذ استراتيجيات إعادة التشجير في مرحلة لاحقة ومؤمنة.',
+        'home.enableGrounding': 'تفعيل البحث اللحظي عبر جوجل',
+        'home.groundingSub': 'الاتصال بالبيانات المباشرة',
         'home.sampleLocation': 'مثال: قرية سالاريه',
-        'home.analyzeBtn': 'تحليل الموقع',
-        'home.analyzingBtn': 'جار التحليل...',
+        'home.analyzeBtn': 'بدء تحليل الموقع',
+        'home.analyzingBtn': 'جارٍ التحليل...',
         'home.analysisFailed': 'فشل التحليل',
-        'home.tabs.reforestation': 'مخطط إعادة التشجير',
+        'home.tabs.reforestation': 'إدارة صحة وحماية الغابات',
         'home.tabs.gardening': 'البستنة المنزلية',
-        'home.tabs.grants': 'التدقيق الرسمي',
+        'home.tabs.grants': 'التدقيق والمنح الرسمية',
         'home.tabs.water': 'المياه الجوفية',
-        'home.tabs.smartFireSense': 'إنذار الحريق الذكي (SmartFireSense)',
-        'home.tabs.estimator': 'تقدير ميزانية المشروع',
-        'home.tabs.invest': 'الاستثمار الأخضر',
-        'home.tabs.newsletter': 'النشرات والتقارير',
+        'home.tabs.smartFireSense': 'نظام مراقبة الحرائق الذكي',
+        'home.tabs.estimator': 'تقدير تكاليف المشروع',
+        'home.tabs.invest': 'الاستثمارات الخضراء',
+        'home.tabs.newsletter': 'مركز الأخبار والتقارير',
         'home.map.selected': 'الموقع المحدد',
         'home.map.analyzed': 'المنطقة المحللة',
 
@@ -456,6 +519,39 @@ const translations: Translations = {
         'grants.deadline': 'الموعد النهائي',
         'grants.learnMore': 'اعرف المزيد',
         'grants.sources': 'المصادر:',
+    },
+    tr: {
+        'header.title': 'GreenHope Girişimi',
+        'footer.copyright': '© 2024 GreenHope Girişimi. AI ile daha yeşil bir gelecek.',
+        'error': 'Beklenmedik bir hata oluştu. Lütfen daha sonra tekrar deneyiniz.',
+        'loading': 'Yükleniyor...',
+        'quotaErrorModal.title': 'API Kotası Doldu',
+        'quotaErrorModal.body': 'Bugünkü API istek limitinize ulaştınız.',
+        'quotaErrorModal.cta': 'Faturalandırmayı Kontrol Et',
+        'quotaErrorModal.close': 'Kapat',
+        'rateLimitError': ({ seconds }) => `İstek sınırı aşıldı. Lütfen ${seconds} saniye bekleyin.`,
+        'networkError': 'Bir ağ hatası oluştu. Lütfen bağlantınızı kontrol edin.',
+        'mapLegend.title': 'Lejant',
+        'homeGardening.title': 'Ev Bahçeciliği Danışmanı',
+        'homeGardening.description': 'Eviniz için kişiselleştirmiş bitki önerileri alın.',
+        'homeGardening.getSuggestions': 'Öneri Al',
+        'homeGardening.resultsTitle': 'Kişiselleştirilmiş Bitki Önerileriniz',
+        'home.title': 'Yapay Zeka Destekli Orman Koruma',
+        'home.subtitle': 'Uydu verileri ve IoT sensörleri ile yangın risklerini önceden tahmin edin.',
+        'home.analyzeBtn': 'Konumu Analiz Et',
+        'home.analyzingBtn': 'Analiz ediliyor...',
+        'home.tabs.reforestation': 'Orman Sağlığı Planlayıcısı',
+        'home.tabs.grants': 'Resmi Denetim',
+        'home.tabs.water': 'Yeraltı Suyu',
+        'home.map.selected': 'Seçili Konum',
+        'home.map.analyzed': 'Analiz Edilen Bölge',
+        'analysis.weather': 'Yerel Hava Durumu',
+        'analysis.vegetation': 'Bitki Örtüsü Analizi',
+        'analysis.strategy': 'Koruma ve Yenileme Stratejisi',
+        'analysis.risk': 'Risk Değerlendirmesi',
+        'grants.title': 'Hibe Bulucu',
+        'grants.subtitle': 'Projeniz için fon fırsatlarını keşfedin.',
+        'grants.findBtn': 'Hibe Bul',
     }
 };
 
